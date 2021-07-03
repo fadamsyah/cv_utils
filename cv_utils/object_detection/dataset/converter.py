@@ -82,7 +82,7 @@ def coco_to_yolo(coco_annotation_path, coco_image_folder,
                      os.path.join(output_folder, "images", output_set_name, image['file_name']))
         
         # Save the annotation to a .txt file
-        annotations = list(map(lambda x: " ".join(list(map(str, x))), image['annotations']))
+        annotations = list(map(lambda x: " ".join(list(map(str, x)))+'\n', image['annotations']))
         with open(os.path.join(output_folder, "labels", output_set_name,
                                os.path.splitext(image['file_name'])[0]+'.txt'), 'w') as f:
             f.writelines(annotations)
