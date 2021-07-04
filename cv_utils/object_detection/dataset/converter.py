@@ -5,8 +5,9 @@ import shutil
 
 from copy import deepcopy
 from pathlib import Path
+from PIL import Image
 
-from .utils import read_json
+from .utils import read_json, write_json
 
 def coco_to_yolo(coco_annotation_path, coco_image_folder,
                  output_folder, output_set_name):
@@ -100,12 +101,12 @@ def coco_to_yolo(coco_annotation_path, coco_image_folder,
     print('-' * 75)
     print('')
     
-def yolo_to_coco(yolo_image_dir,  yolo_label_dir, yoyo_class_file,
+def yolo_to_coco(yolo_image_dir,  yolo_label_dir, yolo_class_file,
                  coco_image_dir, coco_annotation_path):
     
     # Create the image directory
     Path(coco_image_dir).mkdir(parents=True, exist_ok=True)
-    for Path in os.listdir(coco_image_dir):
+    for path in os.listdir(coco_image_dir):
         try: os.remove(os.path.join(coco_image_dir, path))
         except IsADirectoryError: shutil.rmtree(os.path.join(coco_image_dir, path))
     
@@ -115,7 +116,7 @@ def yolo_to_coco(yolo_image_dir,  yolo_label_dir, yoyo_class_file,
         Path(coco_annotation_dirname).mkdir(parents=True, exist_ok=True)
         
     # Get dataset class from .txt file
-    with open(yoyo_class_file, "r") as f:
+    with open(yolo_class_file, "r") as f:
         yolo_class = f.read().splitlines()
     
     # Format dataset class into categories as in COCO
@@ -128,7 +129,7 @@ def yolo_to_coco(yolo_image_dir,  yolo_label_dir, yoyo_class_file,
                 "name": class_name,
                 "id": class_id + 1
             }
-            for class_id, class_name in enumerate(yoyo_class)
+            for class_id, class_name in enumerate(yolo_class)
         ],
         "images": [],
         "annotations": []
@@ -143,10 +144,10 @@ def yolo_to_coco(yolo_image_dir,  yolo_label_dir, yoyo_class_file,
                      os.path.join(coco_image_dir, image_name))
         
         # Get the baseline of image name (without extension)
-        name = os.path.splitext(image_name)
+        name = os.path.splitext(image_name)[0]
         
         # Add the image into coco_annotation
-        width, height = PIL.Image.open(
+        width, height = Image.open(
             os.path.join(coco_image_dir, image_name)
         ).size
         coco_annotation["images"].append(
@@ -171,20 +172,22 @@ def yolo_to_coco(yolo_image_dir,  yolo_label_dir, yoyo_class_file,
             dx = xmax - xmin
             dy = ymax - ymin
             
-            coco_annotation["annotations"].append(
+            coco_annotation["annotations"].append({
                 "id": annotation_id,
                 "bbox": [
                     xmin, ymin, dx, dy
                 ],
                 "image_id": image_id,
-                "category_id": cat_id + 1,
+                "category_id": int(cat_id) + 1,
                 "segmentation": [],
                 "area": dx * dy,
                 "iscrowd": 0
-            )
+            })
             
             # Update the annotation_id
             annotation_id += 1
         
         # Update the image_id
         image_id += 1
+        
+    write_json(coco_annotation, coco_annotation_path)
