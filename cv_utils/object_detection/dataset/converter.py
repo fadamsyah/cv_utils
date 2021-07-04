@@ -28,9 +28,9 @@ def coco_to_yolo(coco_annotation_path, coco_image_folder,
                 - ...
 
     Args:
-        coco_annotation_path (string): [description]
-        coco_image_folder (string): [description]
-        output_folder (string): [description]
+        coco_annotation_path (string): COCO annotation written in a json file
+        coco_image_folder (string): COCO image directory
+        output_folder (string): YOLO image folder
         output_set_name (string): Set name output
     """
     
@@ -103,6 +103,25 @@ def coco_to_yolo(coco_annotation_path, coco_image_folder,
     
 def yolo_to_coco(yolo_image_dir,  yolo_label_dir, yolo_class_file,
                  coco_image_dir, coco_annotation_path):
+    """YOLO --> COCO
+    
+    This code uses the ultralytics/yolov5 format:
+    - {yolo_image_dir}
+        - {image_1}
+        - {image_2}
+        - ...
+    - {yolo_label_dir}
+        - {image_1}
+        - {image_2}
+        - ...
+
+    Args:
+        yolo_image_dir (string): YOLO image directory
+        yolo_label_dir (string): YOLO label directory
+        yolo_class_file (string): A .txt file containing classes of dataset
+        coco_image_dir (string): COCO image dir
+        coco_annotation_path (string): COCO annotation path (.json)
+    """
     
     # Create the image directory
     Path(coco_image_dir).mkdir(parents=True, exist_ok=True)
