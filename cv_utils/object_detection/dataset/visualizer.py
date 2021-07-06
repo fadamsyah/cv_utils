@@ -1,9 +1,58 @@
 import cv2
 import json
+import os
 import pyautogui
 import random
 
 from copy import deepcopy
+
+from .utils import read_json
+    
+def visualize_coco(image_path, annotation_path,
+                   show = True, save_labeled_path = None,
+                   max_image_to_screen_ratio = None, seed=42):
+        
+    # Read the annotation file
+    coco_annotation = read_json(annotation_path)
+        
+    # Get the classes
+    coco_class = [category['name']
+                  for category in coco_annotation["categories"]]
+    
+    # Get a unique color for each class
+    colors = get_class_color(coco_class, seed=seed)
+    
+    # Get the image_id of the image
+    for image in coco_annotation["images"]:
+        if image["file_name"] == os.path.basename(image_path):
+            image_id = int(image["id"])
+            break
+    
+    # Construct a universal-formatted bounding-boxes
+    bbs = []
+    for annotation in coco_annotation["annotations"]:
+        if int(annotation["image_id"]) != image_id:
+            continue
+        
+        # Get bounding-box coordinates
+        xmin, ymin, w, h = annotation["bbox"]
+        xmax = int(xmin + w)
+        ymax = int(ymin + h)
+        xmin = int(xmin)
+        ymin = int(ymin)
+        
+        # In the COCO format, category_id starts from 1
+        category_id = int(annotation["category_id"]) - 1
+        
+        # Get the corresponding color
+        color = colors[category_id]
+        bbs.append([xmin, ymin, xmax, ymax, color])
+    
+    # Get the image
+    img = cv2.imread(image_path)
+    
+    visualize(img, bbs, show, save_labeled_path,
+              max_image_to_screen_ratio)
     
 def visualize_yolo(image_path, label_path, yolo_class_file,
                    show=True, save_labeled_path = None,
@@ -14,11 +63,7 @@ def visualize_yolo(image_path, label_path, yolo_class_file,
         yolo_class = f.read().splitlines()
             
     # Get a unique color for each class
-    random.seed(seed)
-    colors = {i: (random.randint(0, 255),
-                  random.randint(0, 255),
-                  random.randint(0, 255))
-              for i in range(len(yolo_class)+1)}
+    colors = get_class_color(yolo_class, seed=seed)
     
     # Get the image
     img = cv2.imread(image_path)
@@ -32,7 +77,7 @@ def visualize_yolo(image_path, label_path, yolo_class_file,
     bbs = []
     for bb in annotations:
         # YOLO: (category_id, xc, yc, w, h)
-        # category_id starts from 0
+        # In the YOLO format, category_id starts from 0
         category_id, xc, yc, w, h = bb.split(' ')
         
         # xc, yc, w, h are normalized
@@ -48,6 +93,15 @@ def visualize_yolo(image_path, label_path, yolo_class_file,
     
     visualize(img, bbs, show, save_labeled_path,
               max_image_to_screen_ratio)
+
+def get_class_color(classes, seed=42):
+    random.seed(seed)
+    colors = {i: (random.randint(0, 255),
+                  random.randint(0, 255),
+                  random.randint(0, 255))
+              for i in range(len(classes)+1)}
+    
+    return colors
 
 def visualize(img, bbs, show=True, save_labeled_path=None,
               max_image_to_screen_ratio=0.75):
