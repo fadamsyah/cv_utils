@@ -52,6 +52,13 @@ def visualize_yolo(image_path, label_path, yolo_class_file,
 def visualize(img, bbs, show=True, save_labeled_path=None,
               max_image_to_screen_ratio=0.75):
     
+    if save_labeled_path is not None:
+        # Draw bounding-boxes
+        img_c = draw_bbs(img, bbs)
+        
+        # Save the image
+        cv2.imwrite(save_labeled_path, img_c)
+    
     # Resize the image
     if max_image_to_screen_ratio is not None:
         img_c, bbs_c = resize_image(img, bbs, max_image_to_screen_ratio)
@@ -63,8 +70,6 @@ def visualize(img, bbs, show=True, save_labeled_path=None,
     if show:
         cv2.imshow("Sample", img_c)
         cv2.waitKey(0)
-    if save_labeled_path is not None:
-        cv2.imwrite(save_labeled_path, img_c)
 
 def draw_bbs(img, bbs):
     img_c = img.copy()
