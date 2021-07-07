@@ -1,5 +1,7 @@
 import json
 
+from copy import deepcopy
+
 def read_json(path):
     """
     Read a .json file
@@ -32,3 +34,34 @@ def write_json(files, path, indent=4):
     # Writing to saved_path_json
     with open(path, "w") as outfile: 
         outfile.write(json_object) 
+        
+def coco_to_img2annots(coco_annotations):
+    
+    # Initialize img2annots
+    img2annots = {}
+    
+    # Generate img2annots key
+    num_obj_init = {category['id']: 0 for category in coco_annotations['categories']}
+    for image in coco_annotations['images']:
+        image_id = image['id']
+        img2annots[image_id] = {
+            'description': deepcopy(image),
+            'annotations': [],
+            'num_objects': deepcopy(num_obj_init)
+        }
+        
+    # Add every annotation to its corresponding image key
+    for annotation in coco_annotations['annotations']:
+        image_id = annotation['image_id']
+        category_id = annotation['category_id']
+        img2annots[image_id]['annotations'].append(annotation)
+        img2annots[image_id]['num_objects'][category_id] += 1
+    
+    
+    return img2annots
+    
+def yolo_to_img2annots(yolo_annotations, yolo_classes):
+    
+    pass
+    
+    # return img2annots
