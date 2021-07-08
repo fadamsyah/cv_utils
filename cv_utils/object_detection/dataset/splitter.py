@@ -10,6 +10,11 @@ from .utils import coco_to_img2annots
 
 def split_coco(ori_annotation_path, split_dictionary, out_annotation_dir,
                max_iter=100, seed=42):
+    '''
+    Split dataset according to the split_dictionary
+    Optimization objective is minimizing a Sum-Squared Error
+    '''
+    
     # Read the annotation
     input_annotations = read_json(ori_annotation_path)
     
@@ -91,17 +96,22 @@ def split_dataset(img2annots, class_dictionary, split_dictionary,
     best_error = 1.
     random.seed(seed)
     for i in range(max_iter):
+        # Shuffle the img_ids
         random.shuffle(img_ids)
         
+        # Calculate total objects for each class in every set
         for key, val in split_img_dict.items():
-            obj_dict = {name: img2annots[name] for name in img_ids[val[0]:val[1]]}
+            obj_dict = {name: img2annots[name]
+                        for name in img_ids[val[0]:val[1]]}
             obj_counts[key] = calculate_object(obj_dict, total_objects)
             
+        # Calculate the sum-squared-error
         error = 0
         for key1, val1 in split_dictionary.items():
             for _, val2 in obj_counts[key1].items():
                 error = error + (val1-val2)**2
         
+        # Update the parameters if get a better result
         if error < best_error:
             best_error = deepcopy(error)
             best_img_ids_seq = deepcopy(img_ids)
