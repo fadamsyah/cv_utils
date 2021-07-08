@@ -123,16 +123,18 @@ def yolo_to_coco(yolo_image_dir,  yolo_label_dir, yolo_class_file,
         coco_annotation_path (string): COCO annotation path (.json)
     """
     
-    # Create the image directory
-    Path(coco_image_dir).mkdir(parents=True, exist_ok=True)
-    for path in os.listdir(coco_image_dir):
-        try: os.remove(os.path.join(coco_image_dir, path))
-        except IsADirectoryError: shutil.rmtree(os.path.join(coco_image_dir, path))
+    # Create the image directory (if any)
+    if coco_image_dir is not None:
+        Path(coco_image_dir).mkdir(parents=True, exist_ok=True)
+        for path in os.listdir(coco_image_dir):
+            try: os.remove(os.path.join(coco_image_dir, path))
+            except IsADirectoryError: shutil.rmtree(os.path.join(coco_image_dir, path))
     
     # Create the annotation directory (if any)
-    coco_annotation_dirname = os.path.dirname(coco_annotation_path)
-    if len(coco_annotation_dirname) != 0:
-        Path(coco_annotation_dirname).mkdir(parents=True, exist_ok=True)
+    if coco_annotation_path is not None:
+        coco_annotation_dirname = os.path.dirname(coco_annotation_path)
+        if len(coco_annotation_dirname) != 0:
+            Path(coco_annotation_dirname).mkdir(parents=True, exist_ok=True)
         
     # Get dataset class from .txt file
     with open(yolo_class_file, "r") as f:
@@ -157,18 +159,23 @@ def yolo_to_coco(yolo_image_dir,  yolo_label_dir, yolo_class_file,
     # Loop over all images inside the yolo_image_dir
     image_id = 1
     annotation_id = 1
-    for image_name in os.listdir(yolo_image_dir):
-        # Copy the image
-        shutil.copy2(os.path.join(yolo_image_dir, image_name),
-                     os.path.join(coco_image_dir, image_name))
+    searching_dir = yolo_image_dir if yolo_image_dir is not None \
+        else yolo_label_dir
+    for image_name in os.listdir(searching_dir):
+        # Copy the image (if any)
+        if yolo_image_dir is not None:
+            shutil.copy2(os.path.join(yolo_image_dir, image_name),
+                         os.path.join(coco_image_dir, image_name))
         
         # Get the baseline of image name (without extension)
         name = os.path.splitext(image_name)[0]
         
         # Add the image into coco_annotation
-        width, height = Image.open(
-            os.path.join(coco_image_dir, image_name)
-        ).size
+        if coco_image_dir is not None:
+            width, height = Image.open(
+                os.path.join(coco_image_dir, image_name)
+            ).size
+        else: width, height = 1920, 1080
         coco_annotation["images"].append(
             {
                 "file_name": image_name,
@@ -209,4 +216,7 @@ def yolo_to_coco(yolo_image_dir,  yolo_label_dir, yolo_class_file,
         # Update the image_id
         image_id += 1
         
-    write_json(coco_annotation, coco_annotation_path)
+    if coco_annotation_path is not None:
+        write_json(coco_annotation, coco_annotation_path)
+    
+    return coco_annotation
