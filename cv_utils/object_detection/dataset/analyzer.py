@@ -2,6 +2,7 @@ import json
 import os
 
 from .utils import read_json
+from .converter import yolo_to_coco
 
 def coco_dataset_analysis(path_annotation_dictionary):
     '''
@@ -18,6 +19,18 @@ def coco_dataset_analysis(path_annotation_dictionary):
         set_name: read_json(path) for set_name, path
         in path_annotation_dictionary.items()
     }
+    
+    dataset_analysis(annotations)
+    
+def yolo_dataset_analysis(yolo_class_path,
+                          yolo_label_dir):
+      
+    # Convert YOLO --> COCO
+    annotations = {
+        set_name: yolo_to_coco(None, label_dir,
+                               yolo_class_path, None, None)
+        for set_name, label_dir in yolo_label_dir.items()
+    }        
     
     dataset_analysis(annotations)
 
