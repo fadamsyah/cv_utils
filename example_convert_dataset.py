@@ -15,14 +15,16 @@ The converted dataset will be saved as follow:
             - {image_1}
             - {image_2}
             - ...
+    - classes.txt
 '''
 
-project_name = 'sel_telur'
 for set_name in ["train", "test", "val"]:
-    coco_to_yolo(coco_annotation_path = f"test/{project_name}/annotations/instances_{set_name}.json",
-                 coco_image_folder = f"test/{project_name}/{set_name}",
-                 output_folder = "test/dataset",
-                 output_set_name = set_name)
+    coco_to_yolo(
+        coco_annotation_path = f"demo/dataset/fasciola_ori/annotations/instances_{set_name}.json",
+        coco_image_folder = f"demo/dataset/fasciola_ori/{set_name}",
+        output_folder = "demo/dataset/fasciola_yolo",
+        output_set_name = set_name
+    )
     
 '''YOLO --> COCO
 This code uses the ultralytics/yolov5 format:
@@ -37,8 +39,10 @@ This code uses the ultralytics/yolov5 format:
 '''
 
 for set_name in ["train", "test", "val"]:
-    yolo_to_coco(f"test/dataset/images/{set_name}",
-                 f"test/dataset/labels/{set_name}",
-                 "test/dataset/classes.txt",
-                 f"test/coco/{set_name}",
-                 f"test/coco/annotations/instances_{set_name}.json")
+    yolo_to_coco(
+        yolo_image_dir = f"demo/dataset/fasciola_yolo/images/{set_name}",
+        yolo_label_dir = f"demo/dataset/fasciola_yolo/labels/{set_name}",
+        yolo_class_file = "demo/dataset/fasciola_yolo/classes.txt",
+        coco_image_dir = f"demo/dataset/fasciola_coco/{set_name}",
+        coco_annotation_path = f"demo/dataset/fasciola_coco/annotations/instances_{set_name}.json"
+    )
