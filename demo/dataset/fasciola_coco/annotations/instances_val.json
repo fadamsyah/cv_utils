@@ -1,0 +1,68 @@
+{
+    "type": "instances",
+    "categories": [
+        {
+            "supercategory": "none",
+            "name": "fasciola",
+            "id": 1
+        }
+    ],
+    "images": [
+        {
+            "file_name": "49c17b90910b4a.jpg",
+            "height": 1440,
+            "width": 1080,
+            "id": 1
+        },
+        {
+            "file_name": "222e90ca7a0444.jpg",
+            "height": 1308,
+            "width": 1056,
+            "id": 2
+        }
+    ],
+    "annotations": [
+        {
+            "id": 1,
+            "bbox": [
+                522.4657534246577,
+                302.4657534246575,
+                124.93150684931504,
+                109.58904109589042
+            ],
+            "image_id": 1,
+            "category_id": 1,
+            "segmentation": [],
+            "area": 13691.124038281101,
+            "iscrowd": 0
+        },
+        {
+            "id": 2,
+            "bbox": [
+                294.5205479452056,
+                942.4657534246575,
+                127.12328767123284,
+                109.58904109589037
+            ],
+            "image_id": 1,
+            "category_id": 1,
+            "segmentation": [],
+            "area": 13931.31919684743,
+            "iscrowd": 0
+        },
+        {
+            "id": 3,
+            "bbox": [
+                467.6887608069164,
+                109.31412103746393,
+                116.85302593659952,
+                145.12391930835742
+            ],
+            "image_id": 2,
+            "category_id": 1,
+            "segmentation": [],
+            "area": 16958.169106960464,
+            "iscrowd": 0
+        }
+    ]
+}
