@@ -95,11 +95,9 @@ def coco_to_yolo(coco_annotation_path, coco_image_folder,
     for cat in coco_annotation["categories"]:
         categories[cat['id'] - 1] = cat['name']
     
-    print("[INFO] Conversion from COCO object detection format to YOLO complete ...")
-    print("[INFO] You need to ADD the following list to a .yaml or .txt file")
-    print("[INFO] names: {}".format(categories))
-    print('-' * 75)
-    print('')
+    # Save the category into {output_dir/classes.txt}
+    with open(os.path.join(output_folder, "classes.txt"), 'w') as f:
+            f.writelines(categories)
     
 def yolo_to_coco(yolo_image_dir,  yolo_label_dir, yolo_class_file,
                  coco_image_dir, coco_annotation_path):
