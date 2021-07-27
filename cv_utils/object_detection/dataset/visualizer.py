@@ -14,7 +14,25 @@ def visualize_coco(image_path, annotation_path,
         
     # Read the annotation file
     coco_annotation = read_json(annotation_path)
-        
+    
+    # Get the image
+    img = cv2.imread(image_path)
+    
+    # Get the image name
+    image_name = os.path.basename(image_path)
+            
+    _visualize_coco(img, image_name, coco_annotation, show,
+                    save_labeled_path, max_image_to_screen_ratio,
+                    seed)
+    
+def streamlit_visualize_coco(img, img_name, coco_annotation, seed):
+    return _visualize_coco(
+        img, image_name, coco_annotation, False, None, None, seed
+    )
+    
+def _visualize_coco(img, image_name, coco_annotation, show,
+                    save_labeled_path, max_image_to_screen_ratio,
+                    seed=42):
     # Get the classes
     coco_class = [category['name']
                   for category in coco_annotation["categories"]]
@@ -24,7 +42,7 @@ def visualize_coco(image_path, annotation_path,
     
     # Get the image_id of the image
     for image in coco_annotation["images"]:
-        if image["file_name"] == os.path.basename(image_path):
+        if image["file_name"] == image_name:
             image_id = int(image["id"])
             break
     
@@ -48,11 +66,8 @@ def visualize_coco(image_path, annotation_path,
         color = colors[category_id]
         bbs.append([xmin, ymin, xmax, ymax, color])
     
-    # Get the image
-    img = cv2.imread(image_path)
-    
-    visualize(img, bbs, show, save_labeled_path,
-              max_image_to_screen_ratio)
+    return visualize(img, bbs, show, save_labeled_path,
+                     max_image_to_screen_ratio)
     
 def visualize_yolo(image_path, label_path, yolo_class_file,
                    show=True, save_labeled_path = None,
@@ -61,17 +76,31 @@ def visualize_yolo(image_path, label_path, yolo_class_file,
     # Get dataset class from a .txt file
     with open(yolo_class_file, "r") as f:
         yolo_class = f.read().splitlines()
-            
-    # Get a unique color for each class
-    colors = get_class_color(yolo_class, seed=seed)
-    
+                
     # Get the image
     img = cv2.imread(image_path)
-    height, width = img.shape[:2]
     
     # Get bounding-boxes from the corresponding label
     with open(label_path, "r") as f:
         annotations = f.read().splitlines()
+    
+    _visualize_yolo(
+        img, annotations, yolo_class, show,
+        save_labeled_path, max_image_to_screen_ratio, seed
+    )
+
+def streamlit_visualize_yolo(img, labels, yolo_class, seed=42):
+    return _visualize_yolo(img, labels, yolo_class, False,
+                           None, None, seed)
+
+def _visualize_yolo(img, annotations, yolo_class, show,
+                    save_labeled_path, max_image_to_screen_ratio,
+                    seed=42):
+    # Get a unique color for each class
+    colors = get_class_color(yolo_class, seed=seed)
+    
+    # Get the height & width of the image
+    height, width = img.shape[:2]
     
     # Construct a universal-formatted bounding-boxes
     bbs = []
@@ -91,9 +120,9 @@ def visualize_yolo(image_path, label_path, yolo_class_file,
         color = colors[int(category_id)]
         bbs.append([xmin, ymin, xmax, ymax, color])
     
-    visualize(img, bbs, show, save_labeled_path,
-              max_image_to_screen_ratio)
-
+    return visualize(img, bbs, show, save_labeled_path,
+                     max_image_to_screen_ratio)
+    
 def get_class_color(classes, seed=42):
     random.seed(seed)
     colors = {i: (random.randint(0, 255),
@@ -124,6 +153,8 @@ def visualize(img, bbs, show=True, save_labeled_path=None,
     if show:
         cv2.imshow("Sample", img_c)
         cv2.waitKey(0)
+        
+    return img_c
 
 def draw_bbs(img, bbs):
     img_c = img.copy()
