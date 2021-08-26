@@ -9,6 +9,38 @@ from PIL import Image
 
 from .utils import read_json, write_json
 
+def coco2yolo(coco_annotation):
+    # Create a dictionary having an image_id as the key
+    mapping = {image["id"]: {'file_name': image['file_name'],
+                             'height': image['height'],
+                             'width': image['width'],
+                             'annotations': []}
+               for image in coco_annotation['images']}
+    
+    # Loop over annotation
+    for annotation in coco_annotation['annotations']:
+        # Get the x, y, w, h value from an annotation
+        x, y, w, h = annotation['bbox']
+        
+        # Get the image_id of an annotation
+        image_id = annotation['image_id']
+        
+        # Get the width and height of the corresponding image
+        width = mapping[image_id]['width']
+        height = mapping[image_id]['height']
+        
+        # Get the category_id of an annotation
+        # COCO idx starts from 1 whereas YOLO idx starts from 0
+        category_id = annotation['category_id'] - 1
+        
+        # Change bounding-box into as in YOLO format
+        xc = (x + w/2) / width
+        yc = (y + h/2) / height
+        wn = w / width
+        hn = h / height
+    
+    return mapping
+
 def coco_to_yolo(coco_annotation_path, coco_image_folder,
                  output_folder, output_set_name):
     """COCO --> YOLO
@@ -45,37 +77,7 @@ def coco_to_yolo(coco_annotation_path, coco_image_folder,
     # Read a COCO annotation file
     coco_annotation = read_json(coco_annotation_path)
     
-    # Create a dictionary having an image_id as the key
-    mapping = {image["id"]: {'file_name': image['file_name'],
-                             'height': image['height'],
-                             'width': image['width'],
-                             'annotations': []}
-               for image in coco_annotation['images']}
-    
-    # Loop over annotation
-    for annotation in coco_annotation['annotations']:
-        # Get the x, y, w, h value from an annotation
-        x, y, w, h = annotation['bbox']
-        
-        # Get the image_id of an annotation
-        image_id = annotation['image_id']
-        
-        # Get the width and height of the corresponding image
-        width = mapping[image_id]['width']
-        height = mapping[image_id]['height']
-        
-        # Get the category_id of an annotation
-        # COCO idx starts from 1 whereas YOLO idx starts from 0
-        category_id = annotation['category_id'] - 1
-        
-        # Change bounding-box into as in YOLO format
-        xc = (x + w/2) / width
-        yc = (y + h/2) / height
-        wn = w / width
-        hn = h / height
-        
-        # Append annotation
-        mapping[image_id]['annotations'].append([category_id, xc, yc, wn, hn])
+    mapping = coco2yolo(coco_annotation)
         
     # Save into the YOLO format
     # Loop over image
@@ -98,7 +100,7 @@ def coco_to_yolo(coco_annotation_path, coco_image_folder,
     # Save the category into {output_dir/classes.txt}
     with open(os.path.join(output_folder, "classes.txt"), 'w') as f:
             f.writelines(categories)
-    
+
 def yolo_to_coco(yolo_image_dir,  yolo_label_dir, yolo_class_file,
                  coco_image_dir, coco_annotation_path):
     """YOLO --> COCO
