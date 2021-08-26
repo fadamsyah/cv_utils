@@ -38,6 +38,9 @@ def coco2yolo(coco_annotation):
         yc = (y + h/2) / height
         wn = w / width
         hn = h / height
+        
+        # Append annotation
+        mapping[image_id]['annotations'].append([category_id, xc, yc, wn, hn])
     
     return mapping
 
