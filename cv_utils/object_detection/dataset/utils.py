@@ -1,6 +1,18 @@
 import json
+import os
+import shutil
 
 from copy import deepcopy
+from pathlib import Path
+
+def create_and_overwrite_dir(path_dir):
+    # Create the directory
+    Path(path_dir).mkdir(parents=True, exist_ok=True)
+    
+    # Overwrite the directory
+    for path in os.listdir(path_dir):
+        try: os.remove(os.path.join(path_dir, path))
+        except IsADirectoryError: shutil.rmtree(os.path.join(path_dir, path))
 
 def read_json(path):
     """
@@ -34,6 +46,8 @@ def write_json(files, path, indent=4):
     # Writing to saved_path_json
     with open(path, "w") as outfile: 
         outfile.write(json_object) 
+        
+
         
 def coco_to_img2annots(coco_annotations):
     

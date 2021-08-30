@@ -8,8 +8,37 @@ from pathlib import Path
 from PIL import Image
 
 from .utils import read_json, write_json
+from .utils import create_and_overwrite_dir
 
-def coco2yolo(coco_annotation):
+def coco_to_yolo(coco_annotation_path, coco_image_dir,
+                 output_image_dir, output_label_dir, output_category_path):
+    """COCO --> YOLO
+    
+    The converted dataset will be saved as follow:
+    - {output_image_dir}
+        - {image_1}
+        - {image_2}
+        - ...
+    - {output_label_dir}
+        - {image_1}
+        - {image_2}
+        - ...
+
+    Args:
+        coco_annotation_path (string): COCO annotation written in a json file
+        coco_image_dir (string): COCO image directory
+        output_image_dir (string): YOLO image folder
+        output_label_dir (string): YOLO label folder
+        output_category_path(string): YOLO category path
+    """
+    
+    # Create the labels and images folder as in the YOLO format
+    create_and_overwrite_dir(output_image_dir)
+    create_and_overwrite_dir(output_label_dir)
+    
+    # Read a COCO annotation file
+    coco_annotation = read_json(coco_annotation_path)
+    
     # Create a dictionary having an image_id as the key
     mapping = {image["id"]: {'file_name': image['file_name'],
                              'height': image['height'],
@@ -41,57 +70,17 @@ def coco2yolo(coco_annotation):
         
         # Append annotation
         mapping[image_id]['annotations'].append([category_id, xc, yc, wn, hn])
-    
-    return mapping
-
-def coco_to_yolo(coco_annotation_path, coco_image_folder,
-                 output_folder, output_set_name):
-    """COCO --> YOLO
-    
-    This code uses the ultralytics/yolov5 format.
-    The converted dataset will be saved as follow:
-    - {output_folder}
-        - images
-            - {output_set_name}
-                - {image_1}
-                - {image_2}
-                - ...
-        - labels
-            - {output_set_name}
-                - {image_1}
-                - {image_2}
-                - ...
-
-    Args:
-        coco_annotation_path (string): COCO annotation written in a json file
-        coco_image_folder (string): COCO image directory
-        output_folder (string): YOLO image folder
-        output_set_name (string): Set name output
-    """
-    
-    # Create the labels and images folder as in the YOLO format
-    for name in ["labels", "images"]:
-        target_dir = os.path.join(output_folder, name, output_set_name)
-        Path(target_dir).mkdir(parents=True, exist_ok=True)
-        for path in os.listdir(target_dir):
-            try: os.remove(os.path.join(target_dir, path))
-            except IsADirectoryError : shutil.rmtree(os.path.join(target_dir, path))
-    
-    # Read a COCO annotation file
-    coco_annotation = read_json(coco_annotation_path)
-    
-    mapping = coco2yolo(coco_annotation)
         
     # Save into the YOLO format
     # Loop over image
     for _, image in mapping.items():
         # Copy image
-        shutil.copy2(os.path.join(coco_image_folder, image['file_name']),
-                     os.path.join(output_folder, "images", output_set_name, image['file_name']))
+        shutil.copy2(os.path.join(coco_image_dir, image['file_name']),
+                     os.path.join(output_image_dir, image['file_name']))
         
         # Save the annotation to a .txt file
         annotations = list(map(lambda x: " ".join(list(map(str, x)))+'\n', image['annotations']))
-        with open(os.path.join(output_folder, "labels", output_set_name,
+        with open(os.path.join(output_label_dir,
                                os.path.splitext(image['file_name'])[0]+'.txt'), 'w') as f:
             f.writelines(annotations)
     
@@ -101,46 +90,9 @@ def coco_to_yolo(coco_annotation_path, coco_image_folder,
         categories[cat['id'] - 1] = cat['name']
     
     # Save the category into {output_dir/classes.txt}
-    with open(os.path.join(output_folder, "classes.txt"), 'w') as f:
+    with open(output_category_path, 'w') as f:
             f.writelines(categories)
-
-def coco_to_labelimg(coco_annotation_path, coco_image_folder,
-                     output_folder, output_set_name):
-    # Create the output folder
-    target_dir = os.path.join(output_folder, output_set_name)
-    Path(target_dir).mkdir(parents=True, exist_ok=True)
-    for path in os.listdir(target_dir):
-        try: os.remove(os.path.join(target_dir, path))
-        except IsADirectoryError : shutil.rmtree(os.path.join(target_dir, path))
     
-    # Read a COCO annotation file
-    coco_annotation = read_json(coco_annotation_path)
-    
-    # Get the mapping
-    mapping = coco2yolo(coco_annotation)
-    
-    # Save into the YOLO format
-    # Loop over image
-    for _, image in mapping.items():
-        # Copy image
-        shutil.copy2(os.path.join(coco_image_folder, image['file_name']),
-                     os.path.join(output_folder, output_set_name, image['file_name']))
-        
-        # Save the annotation to a .txt file
-        annotations = list(map(lambda x: " ".join(list(map(str, x)))+'\n', image['annotations']))
-        with open(os.path.join(output_folder, output_set_name,
-                               os.path.splitext(image['file_name'])[0]+'.txt'), 'w') as f:
-            f.writelines(annotations)
-    
-    # Get the category
-    categories = [None] * len(coco_annotation["categories"])
-    for cat in coco_annotation["categories"]:
-        categories[cat['id'] - 1] = cat['name']
-    
-    # Save the category into {output_dir/classes.txt}
-    with open(os.path.join(output_folder, output_set_name, "classes.txt"), 'w') as f:
-            f.writelines(categories)
-
 def yolo_to_coco(yolo_image_dir,  yolo_label_dir, yolo_class_file,
                  coco_image_dir, coco_annotation_path):
     """YOLO --> COCO
@@ -165,10 +117,7 @@ def yolo_to_coco(yolo_image_dir,  yolo_label_dir, yolo_class_file,
     
     # Create the image directory (if any)
     if coco_image_dir is not None:
-        Path(coco_image_dir).mkdir(parents=True, exist_ok=True)
-        for path in os.listdir(coco_image_dir):
-            try: os.remove(os.path.join(coco_image_dir, path))
-            except IsADirectoryError: shutil.rmtree(os.path.join(coco_image_dir, path))
+        create_and_overwrite_dir(coco_image_dir)
     
     # Create the annotation directory (if any)
     if coco_annotation_path is not None:
@@ -202,6 +151,9 @@ def yolo_to_coco(yolo_image_dir,  yolo_label_dir, yolo_class_file,
     searching_dir = yolo_image_dir if yolo_image_dir is not None \
         else yolo_label_dir
     for image_name in os.listdir(searching_dir):
+        if not image_name.lower().endswith(('.jpg', '.png', '.jpeg', '.tiff', '.gif')):
+            continue
+        
         # Copy the image (if any)
         if yolo_image_dir is not None:
             shutil.copy2(os.path.join(yolo_image_dir, image_name),
