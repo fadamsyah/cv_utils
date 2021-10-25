@@ -54,12 +54,12 @@ def viz_with_mask(path_wsi, path_mask, level, show=True):
     mask = openslide.open_slide(path_mask)
     
     rgb_image = slide.read_region((0, 0), level, slide.level_dimensions[level])
-    rgb_mask = truth.read_region((0, 0), level, slide.level_dimensions[level])
+    rgb_mask = mask.read_region((0, 0), level, slide.level_dimensions[level])
     
     grey = np.array(rgb_mask.convert('L'))
     rgb_imagenew = np.array(rgb_image)
     
-    _, contours, _ = cv2.findContours(grey, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(grey, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     vis = cv2.drawContours(rgb_imagenew, contours, -1, (0, 0, 255), 5)
     
     if show:
