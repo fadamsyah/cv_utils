@@ -13,7 +13,7 @@ import pandas as pd
 
 from .utils import xml_to_df
 
-def viz_with_xml(path_wsi, path_xml, level):
+def viz_with_xml(path_wsi, path_xml, level, show=True):
     reader = mir.MultiResolutionImageReader()
     mr_image = reader.open(path_wsi)
     
@@ -35,8 +35,6 @@ def viz_with_xml(path_wsi, path_xml, level):
     for n in final_list:
         newx = annotations[annotations['Name']==n]['X']
         newy = annotations[annotations['Name']==n]['Y']
-        print(n)
-        print(newx, newy)
         newxy = list(zip(newx, newy))
         coxy[i] = np.array(newxy, dtype=np.int32)
         i=i+1
@@ -44,9 +42,14 @@ def viz_with_xml(path_wsi, path_xml, level):
     tile = mr_image.getUCharPatch(0, 0, dims[0], dims[1], level)
     vis = cv2.drawContours(tile, coxy, -1, (0, 255, 0), 10)
     
+    if show:
+        cv2.namedWindow("WSI-viz", cv2.WINDOW_NORMAL)
+        cv2.imshow("WSI-viz", vis)
+        cv2.waitKey(0)
+    
     return vis
 
-def viz_with_mask(path_wsi, path_mask, level):
+def viz_with_mask(path_wsi, path_mask, level, show=True):
     slide = openslide.open_slide(path_wsi)
     mask = openslide.open_slide(path_mask)
     
@@ -59,4 +62,9 @@ def viz_with_mask(path_wsi, path_mask, level):
     _, contours, _ = cv2.findContours(grey, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     vis = cv2.drawContours(rgb_imagenew, contours, -1, (0, 0, 255), 5)
     
+    if show:
+        cv2.namedWindow("WSI-viz", cv2.WINDOW_NORMAL)
+        cv2.imshow("WSI-viz", vis)
+        cv2.waitKey(0)
+        
     return vis
