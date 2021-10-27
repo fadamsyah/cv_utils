@@ -1,11 +1,24 @@
 import cv2
 import numpy as np
 import openslide
+
+from PIL import Image
 from skimage.filters import threshold_otsu
 
-def get_thumbnail(slide, thumbnail_level):
-    thumbnail_size = slide.level_dimensions[thumbnail_level]
-    thumbnail = slide.get_thumbnail(thumbnail_size)
+def get_thumbnail(slide, inp, interpolation=Image.BICUBIC):
+    if isinstance(inp, int):
+        thumbnail_size = slide.level_dimensions[inp]
+    elif isinstance(inp, (list, tuple)):
+        thumbnail_size = inp
+    
+    for i in range(len(slide.level_dimensions)):
+        current_slide_dim = slide.level_dimensions[i]
+        if (current_slide_dim[0] < thumbnail_size[0]) and \
+            (current_slide_dim[1] < thumbnail_size[1]):
+            i -= 1; break
+    
+    thumbnail = slide.read_region((0,0), i, slide.level_dimensions[i])
+    thumbnail.thumbnail(thumbnail_size, interpolation)
     thumbnail = np.array(thumbnail)
     
     return thumbnail
@@ -18,3 +31,10 @@ def get_hsv_otsu_threshold(img):
     vthresh = threshold_otsu(v)
     
     return hsv_image, hthresh, sthresh, vthresh
+
+def get_size(size):
+    if isinstance(size, (list, tuple)):
+        size_x, size_y = size
+    elif isinstance(size, int):
+        size_x, size_y = size, size
+    return size_x, size_y

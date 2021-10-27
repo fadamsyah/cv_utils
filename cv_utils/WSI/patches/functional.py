@@ -1,11 +1,11 @@
 import math
 
+from .utils import get_size
+
 def get_patches_coor(x_org_size, y_org_size, level, patch_size, stride,
                      drop_last=True):
-    if isinstance(stride, (list, dict, tuple)):
-        stride_x, stride_y = stride
-    elif isinstance(stride, int):
-        stride_x, stride_y = stride, stride
+    
+    stride_x, stride_y = get_size(stride)
     
     if isinstance(patch_size, (list, dict, tuple)):
         patch_size_x, patch_size_y = patch_size
