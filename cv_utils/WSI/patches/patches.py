@@ -23,8 +23,8 @@ from ... import create_and_overwrite_dir
 
 def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
                               inspection_size, save_dir, drop_last=True, h_max=180,
-                              s_max=255, v_min=70, min_pct_tissue_area=0.05,
-                              min_pct_tumor_area=0.1, ext='tif', overwrite=False):
+                              s_max=255, v_min=70, min_pct_tissue_area=0.1,
+                              min_pct_tumor_area=0.05, ext='tif', overwrite=False):
     """
     - Baru bisa untuk level 0 saja
     """
