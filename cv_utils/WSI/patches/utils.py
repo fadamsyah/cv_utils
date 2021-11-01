@@ -8,7 +8,7 @@ from skimage.filters import threshold_otsu
 def get_slide_crop(slide, loc_crop, level, patch_size):
     crop_slide = np.array(
         slide.read_region(loc_crop, level, patch_size)
-    ).astype(np.uint8)
+    ).astype(np.uint8)[:,:,:3]
     
     return crop_slide
 
