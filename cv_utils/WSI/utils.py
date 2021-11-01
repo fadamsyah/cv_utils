@@ -32,3 +32,10 @@ def xml_to_df(inp, scale_x=1.0, scale_y=1.0):
             df_xml = pd.DataFrame(df_xml)
             
     return df_xml
+
+def pil_to_cv2(img):
+    img = img.convert("RGB")
+    img = np.asarray(img, dtype=np.uint8)
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    
+    return img

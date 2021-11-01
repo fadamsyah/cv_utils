@@ -5,10 +5,11 @@ import openslide
 from PIL import Image
 from skimage.filters import threshold_otsu
 
+from ..utils import pil_to_cv2
+
 def get_slide_crop(slide, loc_crop, level, patch_size):
-    crop_slide = np.array(
-        slide.read_region(loc_crop, level, patch_size)
-    ).astype(np.uint8)[:,:,:3]
+    crop_slide = slide.read_region(loc_crop, level, patch_size)
+    crop_slide = pil_to_cv2(crop_slide)
     
     return crop_slide
 
@@ -26,7 +27,7 @@ def get_thumbnail(slide, inp, interpolation=Image.BICUBIC):
     
     thumbnail = slide.read_region((0,0), i, slide.level_dimensions[i])
     thumbnail.thumbnail(thumbnail_size, interpolation)
-    thumbnail = np.array(thumbnail)
+    thumbnail = pil_to_cv2(thumbnail)
     
     return thumbnail
 
