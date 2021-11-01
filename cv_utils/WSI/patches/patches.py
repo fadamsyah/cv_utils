@@ -16,6 +16,7 @@ from .functional import get_patches_coor
 from .utils import get_size
 from .utils import get_thumbnail
 from .utils import get_hsv_otsu_threshold
+from .utils import get_slide_crop
 
 from ... import create_and_overwrite_dir
 
@@ -73,21 +74,16 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
     print("Filter tissue patches ...")
     category_coordinates = {'tumor': [], 'normal': []}
     for coor in tqdm(coordinates):
-        
         loc_crop = get_loc_crop(coor, patch_size, stride)
-        
-        crop_slide = np.array(slide.read_region(loc_crop, level, (patch_size_x, patch_size_y))).astype(np.uint8)
+        crop_slide = get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y))
         
         if min_tissue_area is not None:
             crop_tissue_binary = centercrop(image=crop_slide)['image']
             crop_tissue_binary = cv2.inRange(cv2.cvtColor(crop_tissue_binary, cv2.COLOR_BGR2HSV), hsv_min, hsv_max)
             if cv2.countNonZero(crop_tissue_binary) < min_tissue_area: continue
         
-        crop_mask = np.array(mask.read_region(loc_crop, level, (inspection_size_x, inspection_size_y))).astype(np.uint8)
-        crop_mask = cv2.cvtColor(crop_mask, cv2.COLOR_BGR2GRAY)
-        crop_mask = np.where(crop_mask != 0, 255, 0).astype(np.uint8)
-        
         # Check whether this is a tumor
+        crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y))
         tumor_area = cv2.countNonZero(centercrop(image=crop_mask)['image'])
         category = 'tumor' if tumor_area >= min_tumor_area else 'normal'
         
@@ -105,14 +101,9 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
     
         # Save patches
         for coor in tqdm(np.array(coordinates)[idxs]):
-            
             loc_crop = get_loc_crop(coor, patch_size, stride)
-            
-            crop_slide = np.array(slide.read_region(loc_crop, level, (patch_size_x, patch_size_y))).astype(np.uint8)
-            
-            crop_mask = np.array(mask.read_region(loc_crop, level, (inspection_size_x, inspection_size_y))).astype(np.uint8)
-            crop_mask = cv2.cvtColor(crop_mask, cv2.COLOR_BGR2GRAY)
-            crop_mask = np.where(crop_mask != 0, 255, 0).astype(np.uint8)
+            crop_slide =  get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y))
+            crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y))
             
             filename = os.path.split(path_slide)[1].split('.')[0]
             filename = f"{filename}_{loc_crop[0]}_{loc_crop[1]}"
@@ -131,6 +122,13 @@ def get_loc_crop(coordinate, patch_size, stride):
                 j*stride_y - (patch_size_y - stride_y)//2)
     
     return loc_crop
+
+def get_crop_mask(mask, loc_crop, level, patch_size):
+    crop_mask = get_slide_crop(mask, loc_crop, level, patch_size)
+    crop_mask = cv2.cvtColor(crop_mask, cv2.COLOR_BGR2GRAY)
+    crop_mask = np.where(crop_mask != 0, 255, 0).astype(np.uint8)
+    
+    return crop_mask
 
 # THE RUNNING TIME IS EXTREMELY SLOW
 # def generate_patches(slide, mask, level, patch_size, stride, inspection_size, min_pct_tissue_area,
