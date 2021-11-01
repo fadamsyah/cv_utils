@@ -9,6 +9,7 @@ import numpy as np
 import openslide
 import os
 
+from pathlib import Path
 from skimage.filters import threshold_otsu
 from tqdm import tqdm
 
@@ -23,14 +24,17 @@ from ... import create_and_overwrite_dir
 def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
                               inspection_size, save_dir, drop_last=True, h_max=180,
                               s_max=255, v_min=70, min_pct_tissue_area=0.05,
-                              min_pct_tumor_area=0.1, ext='tif'):
+                              min_pct_tumor_area=0.1, ext='tif', overwrite=False):
     """
     - Baru bisa untuk level 0 saja
     """
     
-    # Create and overwrite dirname
+    # Create or overwrite dirname
     for _, dirname in save_dir.items():
-        create_and_overwrite_dir(dirname)
+        if overwrite:
+            create_and_overwrite_dir(dirname)
+        else:
+            Path(dirname).mkdir(parents=True, exist_ok=True)
     
     # Read slide & mask
     slide = openslide.OpenSlide(path_slide)
