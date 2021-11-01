@@ -27,7 +27,8 @@ def xml_to_df(inp, scale_x=1.0, scale_y=1.0):
             X_coord = X_coord * scale_x
             Y_coord = float(coordinate.attrib.get('Y'))
             Y_coord = Y_coord * scale_y
-            df_xml = df_xml.append(pd.Series([Name, Order, X_coord, Y_coord], index = dfcols), ignore_index=True)
+            df_xml = df_xml.append(pd.Series([Name, Order, X_coord, Y_coord],
+                                             index = dfcols), ignore_index=True)
             df_xml = pd.DataFrame(df_xml)
             
     return df_xml

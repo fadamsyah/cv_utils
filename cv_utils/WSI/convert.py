@@ -24,5 +24,6 @@ def xml_to_mask(path_wsi, path_xml, path_mask,
     xml_repository.load()
     
     annotation_mask = mir.AnnotationToMask()
-    annotation_mask.convert(annotation_list, path_mask, mr_image.getDimensions(), mr_image.getSpacing(), label_map, conversion_order)
+    annotation_mask.convert(annotation_list, path_mask, mr_image.getDimensions(),
+                            mr_image.getSpacing(), label_map, conversion_order)
     
