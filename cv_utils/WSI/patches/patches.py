@@ -64,10 +64,10 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
     tissue_binary_map = np.where(grey < thresh, 255, 0).astype(np.uint8)
     
     # Get tissue coordinates
-    list_i, list_j = np.where(tissue_binary_map == 255)
-    list_i = list_i[:, np.newaxis]
-    list_j = list_j[:, np.newaxis]
-    coordinates = np.concatenate((list_i, list_j), axis=-1)
+    list_y, list_x = np.where(tissue_binary_map == 255)
+    list_x = list_x[:, np.newaxis]
+    list_y = list_y[:, np.newaxis]
+    coordinates = np.concatenate((list_x, list_y), axis=-1)
     
     centercrop = A.CenterCrop(inspection_size_y, inspection_size_x, always_apply=True)
     min_tissue_area = (inspection_size_x*inspection_size_y) * min_pct_tissue_area \
@@ -92,6 +92,10 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
         category = 'tumor' if tumor_area >= min_tumor_area else 'normal'
         
         category_coordinates[category].append(coor)
+    
+    print('\nNumber of classes:')
+    for category in category_coordinates.keys():
+        print(category, len(category_coordinates[category]))
     
     # Balance the classes and save patches
     n_sample = min(len(category_coordinates['tumor']),
