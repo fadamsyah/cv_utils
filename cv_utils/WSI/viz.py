@@ -11,7 +11,7 @@ import openslide
 import os
 import pandas as pd
 
-from .utils import xml_to_df
+from .utils import pil_to_cv2, xml_to_df
 
 def viz_with_xml(path_wsi, path_xml, level, show=True):
     reader = mir.MultiResolutionImageReader()
@@ -57,8 +57,7 @@ def viz_with_mask(path_wsi, path_mask, level, show=True):
     rgb_mask = mask.read_region((0, 0), level, slide.level_dimensions[level])
     
     grey = np.array(rgb_mask.convert('L'))
-    rgb_imagenew = np.array(rgb_image)
-    
+    rgb_imagenew = pil_to_cv2(rgb_image)
     contours, _ = cv2.findContours(grey, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     vis = cv2.drawContours(rgb_imagenew, contours, -1, (0, 0, 255), 5)
     
