@@ -1,7 +1,17 @@
+import argparse
+
 from cv_utils import WSI
 
-PATH_WSI = 'WSI/slide/tumor/tumor_075.tif'
-PATH_XML = 'WSI/xml/tumor/tumor_075.xml'
-PATH_MASK = 'WSI/mask/tumor/tumor_075.tif'
+"""
+Example:
+    - python wsi_xml_to_mask.py -w WSI/slide/tumor/tumor_019.tif \
+        -x WSI/xml/tumor/tumor_019.xml -m WSI/mask/tumor/tumor_019.tif
+"""
 
-WSI.xml_to_mask(PATH_WSI, PATH_XML, PATH_MASK)
+parser = argparse.ArgumentParser(description='Convert ASAP XML annotation to ')
+parser.add_argument('-w', '--wsi', type=str, default=None, help='WSI path')
+parser.add_argument('-x', '--xml', type=str, default=None, help='XML path')
+parser.add_argument('-m', '--mask', type=str, default=None, help='mask path')
+args = parser.parse_args()
+
+WSI.xml_to_mask(args.wsi, args.xml, args.mask)
