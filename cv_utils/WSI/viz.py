@@ -46,6 +46,7 @@ def viz_with_xml(path_wsi, path_xml, level, show=True):
         cv2.namedWindow("WSI-viz", cv2.WINDOW_NORMAL)
         cv2.imshow("WSI-viz", vis)
         cv2.waitKey(0)
+        cv2.destroyWindow('WSI-viz')
     
     return vis
 
@@ -65,5 +66,6 @@ def viz_with_mask(path_wsi, path_mask, level, show=True):
         cv2.namedWindow("WSI-viz", cv2.WINDOW_NORMAL)
         cv2.imshow("WSI-viz", vis)
         cv2.waitKey(0)
+        cv2.destroyWindow('WSI-viz')
         
     return vis
