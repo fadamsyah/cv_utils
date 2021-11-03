@@ -55,6 +55,7 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
     tissue_binary_map = process_thumbnail_binary_map(tissue_thumbnail.copy(),
                                                      'slide', 3, (2,2), 1)
     tissue_coordinates = get_positive_coordinates(tissue_binary_map)
+    np.random.shuffle(tissue_coordinates)
     
     # Get a HSV threshold
     hsv_image, hthresh, sthresh, vthresh = get_hsv_otsu_threshold(tissue_thumbnail)
@@ -62,10 +63,10 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
     hsv_max = np.array([h_max, s_max, vthresh], np.uint8)
     
     # Get a tumor thumbnail, a tumor binary map, and coordinates containing tumors
-    mask_thumbnail = get_thumbnail(mask, (x_tmb_size, y_tmb_size))
-    mask_binary_map = process_thumbnail_binary_map(mask_thumbnail, 'mask',
-                                                   3, (2,2), 1)
-    mask_coordinates = get_positive_coordinates(mask_binary_map)
+    tumor_thumbnail = get_thumbnail(mask, (x_tmb_size, y_tmb_size))
+    tumor_binary_map = process_thumbnail_binary_map(tumor_thumbnail, 'mask',
+                                                    3, (3,3), 1)
+    tumor_coordinates = get_positive_coordinates(tumor_binary_map)
     
     print(f"Path slide: {path_slide}")
     print(f"Path mask: {path_mask}")
@@ -76,7 +77,7 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
     
     print(f'\nRegion Distribution:')
     print(f"The number of segmented tissue regions: {len(tissue_coordinates)}")
-    print(f"The number of tumor regions: {len(mask_coordinates)}")
+    print(f"The number of tumor regions: {len(tumor_coordinates)}")
     
     # For filtering tissue and tumor regions
     centercrop = A.CenterCrop(inspection_size_y, inspection_size_x, always_apply=True)
@@ -84,16 +85,17 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
         if min_pct_tissue_area is not None else None
     min_tumor_area = (inspection_size_x*inspection_size_y) * min_pct_tumor_area
     
-    # Process crops
-    print("\nFilter tissue patches ...")
-    category_coordinates = {'tumor': [], 'normal': []}
-    for coor in tqdm(tissue_coordinates):
+    # Patches of tumor region
+    print("\nGenerate tumor patches ...")
+    n_tumor_patches = 0
+    for coor in tqdm(tumor_coordinates):
         loc_crop = get_loc_crop(coor, patch_size, stride)
         crop_slide = get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y))
         
         if min_tissue_area is not None:
             crop_tissue_binary = centercrop(image=crop_slide)['image']
-            crop_tissue_binary = cv2.inRange(cv2.cvtColor(crop_tissue_binary, cv2.COLOR_BGR2HSV), hsv_min, hsv_max)
+            crop_tissue_binary = cv2.inRange(cv2.cvtColor(crop_tissue_binary, cv2.COLOR_BGR2HSV),
+                                             hsv_min, hsv_max)
             if cv2.countNonZero(crop_tissue_binary) < min_tissue_area: continue
         
         # Check whether this is a tumor
@@ -101,33 +103,47 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
         tumor_area = cv2.countNonZero(centercrop(image=crop_mask)['image'])
         category = 'tumor' if tumor_area >= min_tumor_area else 'normal'
         
-        category_coordinates[category].append(coor)
-    
-    print('\nNumber of classes:')
-    for category in category_coordinates.keys():
-        print(category, len(category_coordinates[category]))
-    
-    # Balance the classes and save patches
-    n_sample = min(len(category_coordinates['tumor']),
-               len(category_coordinates['normal']))
-    target_coordinates = {}
-    for category in category_coordinates.keys():
-        print(f'\nBalance and save {category} patches ...')
-        
-        coordinates = category_coordinates[category]
-        idxs = np.random.choice(len(coordinates), n_sample, replace=False)
-    
-        # Save patches
-        for coor in tqdm(np.array(coordinates)[idxs]):
-            loc_crop = get_loc_crop(coor, patch_size, stride)
-            crop_slide =  get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y))
-            crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y))
-            
+        # If it is a tumor, then
+        if category == 'tumor':
+            n_tumor_patches += 1
             filename = os.path.split(path_slide)[1].split('.')[0]
             filename = f"{filename}_{loc_crop[0]}_{loc_crop[1]}"
             
             cv2.imwrite(os.path.join(save_dir[category], f"{filename}_patch.{ext}"), crop_slide)
             cv2.imwrite(os.path.join(save_dir[category], f"{filename}_mask.{ext}"), crop_mask)
+    
+    # Patches of normal region
+    print("\nGenerate normal patches ...")
+    n_normal_patches = 0
+    for coor in tqdm(tissue_coordinates):
+        loc_crop = get_loc_crop(coor, patch_size, stride)
+        crop_slide = get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y))
+        
+        if min_tissue_area is not None:
+            crop_tissue_binary = centercrop(image=crop_slide)['image']
+            crop_tissue_binary = cv2.inRange(cv2.cvtColor(crop_tissue_binary, cv2.COLOR_BGR2HSV),
+                                             hsv_min, hsv_max)
+            if cv2.countNonZero(crop_tissue_binary) < min_tissue_area: continue
+        
+        # Check whether this is a tumor
+        crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y))
+        tumor_area = cv2.countNonZero(centercrop(image=crop_mask)['image'])
+        category = 'tumor' if tumor_area >= min_tumor_area else 'normal'
+        
+        # If it is not a tumor, then
+        if category == 'normal':
+            n_normal_patches += 1
+            filename = os.path.split(path_slide)[1].split('.')[0]
+            filename = f"{filename}_{loc_crop[0]}_{loc_crop[1]}"
+            
+            cv2.imwrite(os.path.join(save_dir[category], f"{filename}_patch.{ext}"), crop_slide)
+            cv2.imwrite(os.path.join(save_dir[category], f"{filename}_mask.{ext}"), crop_mask)
+        
+        if n_normal_patches >= n_tumor_patches: break
+
+    print('\nNumber of classes:')
+    print(f"tumor : {n_tumor_patches}")
+    print(f"normal: {n_normal_patches}")
 
 def get_positive_coordinates(binary_map):
     # Remember that the OpenCV library uses (H x W x C) format, whereas

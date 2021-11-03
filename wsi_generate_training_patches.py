@@ -21,8 +21,8 @@ level = 0
 patch_size = (300, 300)
 stride = (128, 128)
 inspection_size = (128, 128)
-min_pct_tissue_area = 0.1
-min_pct_tumor_area = 0.05
+min_pct_tissue_area = 0.2
+min_pct_tumor_area = 0.1
 save_dir = {'tumor': 'WSI/patches/tumor',
             'normal': 'WSI/patches/normal'}
 
