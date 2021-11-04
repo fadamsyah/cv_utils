@@ -19,7 +19,7 @@ from .utils import get_thumbnail
 from .utils import get_hsv_otsu_threshold
 from .utils import get_slide_crop
 
-from ... import create_and_overwrite_dir
+from ...utils import create_and_overwrite_dir
 
 def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
                               inspection_size, save_dir, drop_last=True, h_max=180,
