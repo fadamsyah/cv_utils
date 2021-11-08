@@ -111,7 +111,7 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
                               inspection_size, save_dir, drop_last=True, h_max=180,
                               s_max=255, v_min=70, min_pct_tissue_area=0.1,
                               min_pct_tumor_area=0.05, max_pct_tumor_area_in_normal_patch=0.,
-                              max_tumor_patches=None, ext='tif', overwrite=False):
+                              max_tumor_patches=None, ext='tif', overwrite=False, debug=True):
     """
     - Baru bisa untuk level 0 saja
     """
@@ -156,16 +156,17 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
     tumor_coordinates = get_positive_coordinates(tumor_binary_map)
     np.random.shuffle(tumor_coordinates)
     
-    print(f"Path slide: {path_slide}")
-    print(f"Path mask: {path_mask}")
-    
-    print(f"\nStride: ({stride_x}, {stride_y})")
-    print(f"Patch size: ({patch_size_x}, {patch_size_y})")
-    print(f"Inspection size: ({inspection_size_x}, {inspection_size_y})")
-    
-    print(f'\nRegion Distribution:')
-    print(f"The number of segmented tissue regions: {len(tissue_coordinates)}")
-    print(f"The number of tumor regions: {len(tumor_coordinates)}")
+    if debug:
+        print(f"Path slide: {path_slide}")
+        print(f"Path mask: {path_mask}")
+        
+        print(f"\nStride: ({stride_x}, {stride_y})")
+        print(f"Patch size: ({patch_size_x}, {patch_size_y})")
+        print(f"Inspection size: ({inspection_size_x}, {inspection_size_y})")
+        
+        print(f'\nRegion Distribution:')
+        print(f"The number of segmented tissue regions: {len(tissue_coordinates)}")
+        print(f"The number of tumor regions: {len(tumor_coordinates)}")
     
     # For filtering tissue and tumor regions
     centercrop = A.CenterCrop(inspection_size_y, inspection_size_x, always_apply=True)
@@ -174,7 +175,7 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
     min_tumor_area = (inspection_size_x*inspection_size_y) * min_pct_tumor_area
     
     # Patches of tumor region
-    print("\nGenerate tumor patches ...")
+    if debug: print("\nGenerate tumor patches ...")
     n_tumor_patches = 0
     for coor in tqdm(tumor_coordinates):
         loc_crop = get_loc_crop(coor, patch_size, stride)
@@ -204,7 +205,7 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
             if n_tumor_patches >= max_tumor_patches: break
     
     # Patches of normal region
-    print("\nGenerate normal patches ...")
+    if debug: print("\nGenerate normal patches ...")
     max_tumor_area = (inspection_size_x*inspection_size_y) * max_pct_tumor_area_in_normal_patch
     n_normal_patches = 0
     for coor in tqdm(tissue_coordinates):
@@ -232,10 +233,11 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
             cv2.imwrite(os.path.join(save_dir[category], f"{filename}_mask.{ext}"), crop_mask)
         
         if n_normal_patches >= n_tumor_patches: break
-
-    print('\nNumber of classes:')
-    print(f"tumor : {n_tumor_patches}")
-    print(f"normal: {n_normal_patches}")
+    
+    if debug:
+        print('\nNumber of classes:')
+        print(f"tumor : {n_tumor_patches}")
+        print(f"normal: {n_normal_patches}")
 
 def get_positive_coordinates(binary_map):
     # Remember that the OpenCV library uses (H x W x C) format, whereas
