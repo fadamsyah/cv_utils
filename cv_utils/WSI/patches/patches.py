@@ -23,8 +23,8 @@ from ...utils import create_and_overwrite_dir
 
 def calculate_tumor_patches(path_slide, path_mask, level, patch_size, stride,
                             inspection_size, min_pct_tissue_area=0.1,
-                            min_pct_tumor_area=0.05,  h_max=180,
-                            s_max=255, v_min=70, debug=True):
+                            min_pct_tumor_area=0.05,  h_max=180, s_max=255,
+                            v_min=70, max_tumor_patches=None, debug=True):
     # Read slide & mask
     slide = openslide.OpenSlide(path_slide)
     mask = openslide.OpenSlide(path_mask)
@@ -56,6 +56,7 @@ def calculate_tumor_patches(path_slide, path_mask, level, patch_size, stride,
     tumor_binary_map = process_thumbnail_binary_map(tumor_thumbnail, 'mask',
                                                     None, (3,3), 1)
     tumor_coordinates = get_positive_coordinates(tumor_binary_map)
+    np.random.shuffle(tumor_coordinates)
     
     if debug:
         print(f"Path slide: {path_slide}")
@@ -98,8 +99,9 @@ def calculate_tumor_patches(path_slide, path_mask, level, patch_size, stride,
         # If it is a tumor, then
         if category == 'tumor':
             n_tumor_patches += 1
-            filename = os.path.split(path_slide)[1].split('.')[0]
-            filename = f"{filename}_{loc_crop[0]}_{loc_crop[1]}"
+        
+        if max_tumor_patches:
+            if n_tumor_patches >= max_tumor_patches: break
     
     if debug: print(f"\nNumber of tumor patches: {n_tumor_patches}")
     
@@ -109,7 +111,7 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
                               inspection_size, save_dir, drop_last=True, h_max=180,
                               s_max=255, v_min=70, min_pct_tissue_area=0.1,
                               min_pct_tumor_area=0.05, max_pct_tumor_area_in_normal_patch=0.,
-                              ext='tif', overwrite=False):
+                              max_tumor_patches=None, ext='tif', overwrite=False):
     """
     - Baru bisa untuk level 0 saja
     """
@@ -152,6 +154,7 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
     tumor_binary_map = process_thumbnail_binary_map(tumor_thumbnail, 'mask',
                                                     None, (3,3), 1)
     tumor_coordinates = get_positive_coordinates(tumor_binary_map)
+    np.random.shuffle(tumor_coordinates)
     
     print(f"Path slide: {path_slide}")
     print(f"Path mask: {path_mask}")
@@ -196,6 +199,9 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
             
             cv2.imwrite(os.path.join(save_dir[category], f"{filename}_patch.{ext}"), crop_slide)
             cv2.imwrite(os.path.join(save_dir[category], f"{filename}_mask.{ext}"), crop_mask)
+        
+        if max_tumor_patches:
+            if n_tumor_patches >= max_tumor_patches: break
     
     # Patches of normal region
     print("\nGenerate normal patches ...")
