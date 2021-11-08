@@ -108,7 +108,8 @@ def calculate_tumor_patches(path_slide, path_mask, level, patch_size, stride,
 def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
                               inspection_size, save_dir, drop_last=True, h_max=180,
                               s_max=255, v_min=70, min_pct_tissue_area=0.1,
-                              min_pct_tumor_area=0.05, ext='tif', overwrite=False):
+                              min_pct_tumor_area=0.05, max_pct_tumor_area_in_normal_patch=0.,
+                              ext='tif', overwrite=False):
     """
     - Baru bisa untuk level 0 saja
     """
@@ -198,6 +199,7 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
     
     # Patches of normal region
     print("\nGenerate normal patches ...")
+    max_tumor_area = (inspection_size_x*inspection_size_y) * max_pct_tumor_area_in_normal_patch
     n_normal_patches = 0
     for coor in tqdm(tissue_coordinates):
         loc_crop = get_loc_crop(coor, patch_size, stride)
@@ -209,12 +211,12 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
                                              hsv_min, hsv_max)
             if cv2.countNonZero(crop_tissue_binary) < min_tissue_area: continue
         
-        # Check whether this is a tumor
+        # Check whether this is a normal patch or not
         crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y))
         tumor_area = cv2.countNonZero(centercrop(image=crop_mask)['image'])
-        category = 'tumor' if tumor_area >= min_tumor_area else 'normal'
+        category = 'normal' if tumor_area <= max_tumor_area else 'unnormal'
         
-        # If it is not a tumor, then
+        # If it is a normal patch, then
         if category == 'normal':
             n_normal_patches += 1
             filename = os.path.split(path_slide)[1].split('.')[0]
