@@ -1,45 +1,42 @@
 import torchmetrics
+from torch.nn import functional as F
 
 class Accuracy(torchmetrics.Accuracy):
-    def __init__(self, use_cuda=False, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.use_cuda = use_cuda
     
     def __call__(self, preds, target, *args):
-        y_true = target.int()
-        if self.use_cuda:
-            y_true = y_true.cuda()
-        return super().__call__(preds, y_true, *args)
+        y_pred = F.sigmoid(preds)
+        y_pred = y_pred.cpu()
+        y_true = target.cpu().int()
+        return super().__call__(y_pred, y_true, *args)
 
 class Precision(torchmetrics.Precision):
-    def __init__(self, use_cuda=False, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.use_cuda = use_cuda
     
     def __call__(self, preds, target, *args):
-        y_true = target.int()
-        if self.use_cuda:
-            y_true = y_true.cuda()
-        return super().__call__(preds, y_true, *args)
+        y_pred = F.sigmoid(preds)
+        y_pred = y_pred.cpu()
+        y_true = target.cpu().int()
+        return super().__call__(y_pred, y_true, *args)
 
 class Recall(torchmetrics.Recall):
-    def __init__(self, use_cuda=False, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.use_cuda = use_cuda
     
     def __call__(self, preds, target, *args):
-        y_true = target.int()
-        if self.use_cuda:
-            y_true = y_true.cuda()
-        return super().__call__(preds, y_true, *args)
+        y_pred = F.sigmoid(preds)
+        y_pred = y_pred.cpu()
+        y_true = target.cpu().int()
+        return super().__call__(y_pred, y_true, *args)
 
 class F1(torchmetrics.F1):
-    def __init__(self, use_cuda=False, **kwargs):
+    def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.use_cuda = use_cuda
     
     def __call__(self, preds, target, *args):
-        y_true = target.int()
-        if self.use_cuda:
-            y_true = y_true.cuda()
-        return super().__call__(preds, y_true, *args)
+        y_pred = F.sigmoid(preds)
+        y_pred = y_pred.cpu()
+        y_true = target.cpu().int()
+        return super().__call__(y_pred, y_true, *args)
