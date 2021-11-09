@@ -177,7 +177,9 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
     # Patches of tumor region
     if debug: print("\nGenerate tumor patches ...")
     n_tumor_patches = 0
-    for coor in tqdm(tumor_coordinates):
+    iterations = tumor_coordinates
+    if debug: iterations = tqdm(iterations)
+    for coor in iterations:
         loc_crop = get_loc_crop(coor, patch_size, stride)
         crop_slide = get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y))
         
@@ -208,7 +210,9 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
     if debug: print("\nGenerate normal patches ...")
     max_tumor_area = (inspection_size_x*inspection_size_y) * max_pct_tumor_area_in_normal_patch
     n_normal_patches = 0
-    for coor in tqdm(tissue_coordinates):
+    iterations = tissue_coordinates
+    if debug: iterations = tqdm(iterations)
+    for coor in iterations:
         loc_crop = get_loc_crop(coor, patch_size, stride)
         crop_slide = get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y))
         
