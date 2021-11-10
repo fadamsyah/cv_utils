@@ -40,11 +40,7 @@ def calculate_tumor_patches(path_slide, path_mask, level, patch_size, stride,
     y_tmb_size = int(y_org_size / stride_y)
     
     # Get a slide thumbnail, a tissue binary map, and coordinates containing tissues
-    tissue_thumbnail = get_thumbnail(slide, (x_tmb_size, y_tmb_size))
-    tissue_binary_map = process_thumbnail_binary_map(tissue_thumbnail.copy(),
-                                                     'slide', 3, (2,2), 1)
-    tissue_coordinates = get_positive_coordinates(tissue_binary_map)
-    np.random.shuffle(tissue_coordinates)
+    tissue_thumbnail, tissue_coordinates = get_tissue_coordinates(slide, x_tmb_size, y_tmb_size)
     
     # Get a HSV threshold
     hsv_image, hthresh, sthresh, vthresh = get_hsv_otsu_threshold(tissue_thumbnail)
@@ -52,11 +48,7 @@ def calculate_tumor_patches(path_slide, path_mask, level, patch_size, stride,
     hsv_max = np.array([h_max, s_max, vthresh], np.uint8)
     
     # Get a tumor thumbnail, a tumor binary map, and coordinates containing tumors
-    tumor_thumbnail = get_thumbnail(mask, (x_tmb_size, y_tmb_size))
-    tumor_binary_map = process_thumbnail_binary_map(tumor_thumbnail, 'mask',
-                                                    None, (3,3), 1)
-    tumor_coordinates = get_positive_coordinates(tumor_binary_map)
-    np.random.shuffle(tumor_coordinates)
+    _, tumor_coordinates = get_tumor_coordinates(mask, x_tmb_size, y_tmb_size)
     
     if debug:
         print(f"Path slide: {path_slide}")
@@ -138,11 +130,7 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
     y_tmb_size = int(y_org_size / stride_y)
     
     # Get a slide thumbnail, a tissue binary map, and coordinates containing tissues
-    tissue_thumbnail = get_thumbnail(slide, (x_tmb_size, y_tmb_size))
-    tissue_binary_map = process_thumbnail_binary_map(tissue_thumbnail.copy(),
-                                                     'slide', 3, (2,2), 1)
-    tissue_coordinates = get_positive_coordinates(tissue_binary_map)
-    np.random.shuffle(tissue_coordinates)
+    tissue_thumbnail, tissue_coordinates = get_tissue_coordinates(slide, x_tmb_size, y_tmb_size)
     
     # Get a HSV threshold
     hsv_image, hthresh, sthresh, vthresh = get_hsv_otsu_threshold(tissue_thumbnail)
@@ -150,11 +138,7 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
     hsv_max = np.array([h_max, s_max, vthresh], np.uint8)
     
     # Get a tumor thumbnail, a tumor binary map, and coordinates containing tumors
-    tumor_thumbnail = get_thumbnail(mask, (x_tmb_size, y_tmb_size))
-    tumor_binary_map = process_thumbnail_binary_map(tumor_thumbnail, 'mask',
-                                                    None, (3,3), 1)
-    tumor_coordinates = get_positive_coordinates(tumor_binary_map)
-    np.random.shuffle(tumor_coordinates)
+    _, tumor_coordinates = get_tumor_coordinates(mask, x_tmb_size, y_tmb_size)
     
     if debug:
         print(f"Path slide: {path_slide}")
@@ -242,6 +226,32 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
         print('\nNumber of classes:')
         print(f"tumor : {n_tumor_patches}")
         print(f"normal: {n_normal_patches}")
+
+def get_tissue_coordinates(slide, x_tmb_size, y_tmb_size, ksize=3,
+                           kernel_size=(2,2), iterations=1):
+    if isinstance(slide, str):
+        slide = openslide.OpenSlide(slide)
+    
+    tissue_thumbnail = get_thumbnail(slide, (x_tmb_size, y_tmb_size))
+    tissue_binary_map = process_thumbnail_binary_map(tissue_thumbnail.copy(), 'slide',
+                                                     ksize, kernel_size, iterations)
+    tissue_coordinates = get_positive_coordinates(tissue_binary_map)
+    np.random.shuffle(tissue_coordinates)
+    
+    return tissue_thumbnail, tissue_coordinates
+
+def get_tumor_coordinates(mask, x_tmb_size, y_tmb_size, ksize=None,
+                          kernel_size=(3,3), iterations=1):
+    if isinstance(mask, str):
+        mask = openslide.OpenSlide(mask)
+    
+    tumor_thumbnail = get_thumbnail(mask, (x_tmb_size, y_tmb_size))
+    tumor_binary_map = process_thumbnail_binary_map(tumor_thumbnail, 'mask',
+                                                    ksize, kernel_size, iterations)
+    tumor_coordinates = get_positive_coordinates(tumor_binary_map)
+    np.random.shuffle(tumor_coordinates)
+    
+    return tumor_thumbnail, tumor_coordinates
 
 def get_positive_coordinates(binary_map):
     # Remember that the OpenCV library uses (H x W x C) format, whereas
