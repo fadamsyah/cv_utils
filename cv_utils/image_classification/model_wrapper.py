@@ -59,21 +59,24 @@ class CommonModelWrapper(pl.LightningModule):
             for name, func in self.metrics.items():
                 self.log(f"test_{name}", func(out, mask), on_step=False, on_epoch=True, prog_bar=True, logger=True)
     
-    def load_model_checkpoint(self, checkpoint_path, evaluation=True, requires_grad=True):
+    def load_model_checkpoint(self, checkpoint_path):
         checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
-        
         self.model.load_state_dict(checkpoint['state_dict'])
-        
-        self.model.requires_grad_(requires_grad)
-        
-        if evaluation: self.model.eval()
-        else: self.model.train()
+    
+    def train(self):
+        self.model.train()
+    
+    def eval(self):
+        self.model.eval()
     
     def cpu(self):
         self.model.cpu()
     
     def cuda(self):
         self.model.cuda()
+    
+    def requires_grad(self, requires_grad):
+        self.model.requires_grad_(requires_grad)
     
     def set_optim_hyp(self, class_alg, hyp_dict):
         self.optim_alg = class_alg
