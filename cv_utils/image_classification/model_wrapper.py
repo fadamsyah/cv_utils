@@ -24,7 +24,7 @@ class CommonModelWrapper(pl.LightningModule):
     def training_step(self, batch, batch_nb):
         img, mask = batch
         
-        out = self.forward(img)        
+        out = self.forward(img)
         loss = self.loss(out, mask)
         self.log("train_loss", loss, on_step=False, on_epoch=True, prog_bar=True, logger=True)
         if self.metrics is not None:
@@ -59,7 +59,7 @@ class CommonModelWrapper(pl.LightningModule):
             for name, func in self.metrics.items():
                 self.log(f"test_{name}", func(out, mask), on_step=False, on_epoch=True, prog_bar=True, logger=True)
     
-    def load_model(self, checkpoint_path, evaluation=True, requires_grad=True):
+    def load_model_checkpoint(self, checkpoint_path, evaluation=True, requires_grad=True):
         checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
         
         self.model.load_state_dict(checkpoint['state_dict'])
