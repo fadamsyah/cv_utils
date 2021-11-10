@@ -61,7 +61,7 @@ class CommonModelWrapper(pl.LightningModule):
     
     def load_model_checkpoint(self, checkpoint_path):
         checkpoint = torch.load(checkpoint_path, map_location=torch.device('cpu'))
-        self.model.load_state_dict(checkpoint['state_dict'])
+        self.load_state_dict(checkpoint['state_dict'])
     
     def train(self):
         self.model.train()
