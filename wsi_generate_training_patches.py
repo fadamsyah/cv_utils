@@ -27,7 +27,7 @@ save_dir = {'tumor': 'WSI/patches/tumor',
             'normal': 'WSI/patches/normal'}
 
 WSI.generate_training_patches(
-    args.wsi, args.mask, level, patch_size, stride, inspection_size, save_dir, drop_last=True,
+    args.wsi, args.mask, level, patch_size, stride, inspection_size, save_dir,
     min_pct_tissue_area=min_pct_tissue_area, min_pct_tumor_area=min_pct_tumor_area, ext=args.ext,
     overwrite=args.overwrite
 )

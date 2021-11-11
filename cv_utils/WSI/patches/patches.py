@@ -100,8 +100,8 @@ def calculate_tumor_patches(path_slide, path_mask, level, patch_size, stride,
     return n_tumor_patches
 
 def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
-                              inspection_size, save_dir, drop_last=True, h_max=180,
-                              s_max=255, v_min=70, min_pct_tissue_area=0.1,
+                              inspection_size, save_dir, h_max=180, s_max=255, v_min=70,
+                              normal_tumor_ratio=1.0, min_pct_tissue_area=0.1,
                               min_pct_tumor_area=0.05, max_pct_tumor_area_in_normal_patch=0.,
                               max_tumor_patches=None, ext='tif', overwrite=False, debug=True):
     """
@@ -220,7 +220,7 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
             cv2.imwrite(os.path.join(save_dir[category], f"{filename}_patch.{ext}"), crop_slide)
             cv2.imwrite(os.path.join(save_dir[category], f"{filename}_mask.{ext}"), crop_mask)
         
-        if n_normal_patches >= n_tumor_patches: break
+        if n_normal_patches >= (n_tumor_patches*normal_tumor_ratio): break
     
     if debug:
         print('\nNumber of classes:')
