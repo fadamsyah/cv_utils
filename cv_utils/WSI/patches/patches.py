@@ -25,6 +25,8 @@ def calculate_tumor_patches(path_slide, path_mask, level, patch_size, stride,
                             inspection_size, min_pct_tissue_area=0.1,
                             min_pct_tumor_area=0.05,  h_max=180, s_max=255,
                             v_min=70, max_tumor_patches=None, debug=True):
+    multiplier = pow(2, level)
+    
     # Read slide & mask
     slide = openslide.OpenSlide(path_slide)
     mask = openslide.OpenSlide(path_mask)
@@ -63,6 +65,8 @@ def calculate_tumor_patches(path_slide, path_mask, level, patch_size, stride,
         print(f"The number of tumor regions: {len(tumor_coordinates)}")
     
     # For filtering tissue and tumor regions
+    inspection_size_x = inspection_size_x * multiplier
+    inspection_size_y = inspection_size_y * multiplier
     centercrop = A.CenterCrop(inspection_size_y, inspection_size_x, always_apply=True)
     min_tissue_area = (inspection_size_x*inspection_size_y) * min_pct_tissue_area \
         if min_pct_tissue_area is not None else None
@@ -104,9 +108,7 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
                               normal_tumor_ratio=1.0, min_pct_tissue_area=0.1,
                               min_pct_tumor_area=0.05, max_pct_tumor_area_in_normal_patch=0.,
                               max_tumor_patches=None, ext='tif', overwrite=False, debug=True):
-    """
-    - Baru bisa untuk level 0 saja
-    """
+    multiplier = pow(2, level)
     
     # Create or overwrite dirname
     for _, dirname in save_dir.items():
@@ -153,6 +155,8 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
         print(f"The number of tumor regions: {len(tumor_coordinates)}")
     
     # For filtering tissue and tumor regions
+    inspection_size_x = inspection_size_x * multiplier
+    inspection_size_y = inspection_size_y * multiplier
     centercrop = A.CenterCrop(inspection_size_y, inspection_size_x, always_apply=True)
     min_tissue_area = (inspection_size_x*inspection_size_y) * min_pct_tissue_area \
         if min_pct_tissue_area is not None else None

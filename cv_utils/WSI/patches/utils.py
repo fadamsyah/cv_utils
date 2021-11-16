@@ -8,7 +8,14 @@ from skimage.filters import threshold_otsu
 from ..utils import pil_to_cv2
 
 def get_slide_crop(slide, loc_crop, level, patch_size):
-    crop_slide = slide.read_region(loc_crop, level, patch_size)
+    multiplier = pow(2, level)
+    
+    patch_size_x, patch_size_y = patch_size
+    patch_size_x = patch_size_x * multiplier
+    patch_size_y = patch_size_y * multiplier
+    
+    crop_slide = slide.read_region(loc_crop, level,
+                                   (patch_size_x, patch_size_y))
     crop_slide = pil_to_cv2(crop_slide)
     
     return crop_slide
