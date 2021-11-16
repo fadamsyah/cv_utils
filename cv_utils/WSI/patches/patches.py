@@ -65,8 +65,8 @@ def calculate_tumor_patches(path_slide, path_mask, level, patch_size, stride,
         print(f"The number of tumor regions: {len(tumor_coordinates)}")
     
     # For filtering tissue and tumor regions
-    inspection_size_x = inspection_size_x * multiplier
-    inspection_size_y = inspection_size_y * multiplier
+    inspection_size_x = inspection_size_x // multiplier
+    inspection_size_y = inspection_size_y // multiplier
     centercrop = A.CenterCrop(inspection_size_y, inspection_size_x, always_apply=True)
     min_tissue_area = (inspection_size_x*inspection_size_y) * min_pct_tissue_area \
         if min_pct_tissue_area is not None else None
@@ -155,8 +155,8 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
         print(f"The number of tumor regions: {len(tumor_coordinates)}")
     
     # For filtering tissue and tumor regions
-    inspection_size_x = inspection_size_x * multiplier
-    inspection_size_y = inspection_size_y * multiplier
+    inspection_size_x = inspection_size_x // multiplier
+    inspection_size_y = inspection_size_y // multiplier
     centercrop = A.CenterCrop(inspection_size_y, inspection_size_x, always_apply=True)
     min_tissue_area = (inspection_size_x*inspection_size_y) * min_pct_tissue_area \
         if min_pct_tissue_area is not None else None
