@@ -13,18 +13,15 @@ from pathlib import Path
 from skimage.filters import threshold_otsu
 from tqdm import tqdm
 
-from .functional import get_patches_coor
 from .utils import get_size
 from .utils import get_thumbnail
-from .utils import get_hsv_otsu_threshold
 from .utils import get_slide_crop
 
 from ...utils import create_and_overwrite_dir
 
 def calculate_tumor_patches(path_slide, path_mask, level, patch_size, stride,
-                            inspection_size, min_pct_tissue_area=0.1,
-                            min_pct_tumor_area=0.05,  h_max=180, s_max=255,
-                            v_min=70, max_tumor_patches=None, debug=True):
+                            inspection_size, min_mstd=5., min_pct_tumor_area=0.05,
+                            max_tumor_patches=None, debug=True):
     multiplier = pow(2, level)
     
     # Read slide & mask
@@ -42,12 +39,7 @@ def calculate_tumor_patches(path_slide, path_mask, level, patch_size, stride,
     y_tmb_size = int(y_org_size / stride_y)
     
     # Get a slide thumbnail, a tissue binary map, and coordinates containing tissues
-    tissue_thumbnail, tissue_coordinates, tissue_binary_map = get_tissue_coordinates(slide, x_tmb_size, y_tmb_size)
-    
-    # Get a HSV threshold
-    hsv_image, hthresh, sthresh, vthresh = get_hsv_otsu_threshold(tissue_thumbnail)
-    hsv_min = np.array([hthresh, sthresh, v_min], np.uint8)
-    hsv_max = np.array([h_max, s_max, vthresh], np.uint8)
+    _, tissue_coordinates, _ = get_tissue_coordinates(slide, x_tmb_size, y_tmb_size)
     
     # Get a tumor thumbnail, a tumor binary map, and coordinates containing tumors
     _, tumor_coordinates = get_tumor_coordinates(mask, x_tmb_size, y_tmb_size)
@@ -68,8 +60,6 @@ def calculate_tumor_patches(path_slide, path_mask, level, patch_size, stride,
     inspection_size_x = inspection_size_x // multiplier
     inspection_size_y = inspection_size_y // multiplier
     centercrop = A.CenterCrop(inspection_size_y, inspection_size_x, always_apply=True)
-    min_tissue_area = (inspection_size_x*inspection_size_y) * min_pct_tissue_area \
-        if min_pct_tissue_area is not None else None
     min_tumor_area = (inspection_size_x*inspection_size_y) * min_pct_tumor_area
     
     # Patches of tumor region
@@ -81,11 +71,8 @@ def calculate_tumor_patches(path_slide, path_mask, level, patch_size, stride,
         loc_crop = get_loc_crop(coor, patch_size, stride)
         crop_slide = get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y))
         
-        if min_tissue_area is not None:
-            crop_tissue_binary = centercrop(image=crop_slide)['image']
-            crop_tissue_binary = cv2.inRange(cv2.cvtColor(crop_tissue_binary, cv2.COLOR_BGR2HSV),
-                                             hsv_min, hsv_max)
-            if cv2.countNonZero(crop_tissue_binary) < min_tissue_area: continue
+        if min_mstd is not None:
+            if not is_foreground(crop_slide, min_mstd): continue
         
         # Check whether this is a tumor
         crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y))
@@ -104,8 +91,7 @@ def calculate_tumor_patches(path_slide, path_mask, level, patch_size, stride,
     return n_tumor_patches
 
 def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
-                              inspection_size, save_dir, h_max=180, s_max=255, v_min=70,
-                              normal_tumor_ratio=1.0, min_pct_tissue_area=0.1,
+                              inspection_size, save_dir, normal_tumor_ratio=1.0, min_mstd=5.,
                               min_pct_tumor_area=0.05, max_pct_tumor_area_in_normal_patch=0.,
                               max_tumor_patches=None, ext_patch='tif', ext_mask='tif', overwrite=False,
                               debug=True):
@@ -133,12 +119,7 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
     y_tmb_size = int(y_org_size / stride_y)
     
     # Get a slide thumbnail, a tissue binary map, and coordinates containing tissues
-    tissue_thumbnail, tissue_coordinates, tissue_binary_map = get_tissue_coordinates(slide, x_tmb_size, y_tmb_size)
-    
-    # Get a HSV threshold
-    hsv_image, hthresh, sthresh, vthresh = get_hsv_otsu_threshold(tissue_thumbnail)
-    hsv_min = np.array([hthresh, sthresh, v_min], np.uint8)
-    hsv_max = np.array([h_max, s_max, vthresh], np.uint8)
+    _, tissue_coordinates, _ = get_tissue_coordinates(slide, x_tmb_size, y_tmb_size)
     
     # Get a tumor thumbnail, a tumor binary map, and coordinates containing tumors
     _, tumor_coordinates = get_tumor_coordinates(mask, x_tmb_size, y_tmb_size)
@@ -159,8 +140,6 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
     inspection_size_x = inspection_size_x // multiplier
     inspection_size_y = inspection_size_y // multiplier
     centercrop = A.CenterCrop(inspection_size_y, inspection_size_x, always_apply=True)
-    min_tissue_area = (inspection_size_x*inspection_size_y) * min_pct_tissue_area \
-        if min_pct_tissue_area is not None else None
     min_tumor_area = (inspection_size_x*inspection_size_y) * min_pct_tumor_area
     
     # Patches of tumor region
@@ -172,11 +151,8 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
         loc_crop = get_loc_crop(coor, patch_size, stride)
         crop_slide = get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y))
         
-        if min_tissue_area is not None:
-            crop_tissue_binary = centercrop(image=crop_slide)['image']
-            crop_tissue_binary = cv2.inRange(cv2.cvtColor(crop_tissue_binary, cv2.COLOR_BGR2HSV),
-                                             hsv_min, hsv_max)
-            if cv2.countNonZero(crop_tissue_binary) < min_tissue_area: continue
+        if min_mstd is not None:
+            if not is_foreground(crop_slide, min_mstd): continue
         
         # Check whether this is a tumor
         crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y))
@@ -205,11 +181,8 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
         loc_crop = get_loc_crop(coor, patch_size, stride)
         crop_slide = get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y))
         
-        if min_tissue_area is not None:
-            crop_tissue_binary = centercrop(image=crop_slide)['image']
-            crop_tissue_binary = cv2.inRange(cv2.cvtColor(crop_tissue_binary, cv2.COLOR_BGR2HSV),
-                                             hsv_min, hsv_max)
-            if cv2.countNonZero(crop_tissue_binary) < min_tissue_area: continue
+        if min_mstd is not None:
+            if not is_foreground(crop_slide, min_mstd): continue
         
         # Check whether this is a normal patch or not
         crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y))
@@ -303,3 +276,10 @@ def process_thumbnail_binary_map(thumbnail, slide_type, ksize=None, kernel_size=
                                 iterations=iterations)
     
     return binary_map
+
+def is_foreground(patch, threshold_mstd=5.):
+    # Reference/Source:
+    # https://github.com/longluu/DL-CancerDetection-CAMELYON16/blob/master/CancerDetection_preprocessing_1level.ipynb
+    mstd = np.mean(np.std(patch, axis=-1))
+    
+    return mstd >= threshold_mstd

@@ -21,13 +21,13 @@ level = 0
 patch_size = (300, 300)
 stride = (64, 64)
 inspection_size = (128, 128)
-min_pct_tissue_area = 0.2
+min_mstd = 5.
 min_pct_tumor_area = 0.5
 save_dir = {'tumor': 'WSI/patches/tumor',
             'normal': 'WSI/patches/normal'}
 
 WSI.generate_training_patches(
     args.wsi, args.mask, level, patch_size, stride, inspection_size, save_dir,
-    min_pct_tissue_area=min_pct_tissue_area, min_pct_tumor_area=min_pct_tumor_area, ext=args.ext,
+    min_mstd=min_mstd, min_pct_tumor_area=min_pct_tumor_area, ext=args.ext,
     overwrite=args.overwrite
 )
