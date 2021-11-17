@@ -72,7 +72,8 @@ def calculate_tumor_patches(path_slide, path_mask, level, patch_size, stride,
         crop_slide = get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y))
         
         if min_mstd is not None:
-            if not is_foreground(crop_slide, min_mstd): continue
+            center_crop_slide = centercrop(image=crop_slide)['image']
+            if not is_foreground(center_crop_slide, min_mstd): continue
         
         # Check whether this is a tumor
         crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y))
@@ -152,7 +153,8 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
         crop_slide = get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y))
         
         if min_mstd is not None:
-            if not is_foreground(crop_slide, min_mstd): continue
+            center_crop_slide = centercrop(image=crop_slide)['image']
+            if not is_foreground(center_crop_slide, min_mstd): continue
         
         # Check whether this is a tumor
         crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y))
@@ -182,7 +184,8 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
         crop_slide = get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y))
         
         if min_mstd is not None:
-            if not is_foreground(crop_slide, min_mstd): continue
+            center_crop_slide = centercrop(image=crop_slide)['image']
+            if not is_foreground(center_crop_slide, min_mstd): continue
         
         # Check whether this is a normal patch or not
         crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y))
