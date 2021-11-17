@@ -80,6 +80,7 @@ class CommonModelWrapper(pl.LightningModule):
     
     def set_optim_hyp(self, class_alg, hyp_dict):
         self.optim_alg = class_alg
+        self.optim_kwargs = {}
         for key, val in hyp_dict.items():
             self.optim_kwargs[key] = val
     
