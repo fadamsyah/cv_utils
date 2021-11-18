@@ -94,8 +94,8 @@ def calculate_tumor_patches(path_slide, path_mask, level, patch_size, stride,
 def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
                               inspection_size, save_dir, normal_tumor_ratio=1.0, min_mstd=5.,
                               min_pct_tumor_area=0.05, max_pct_tumor_area_in_normal_patch=0.,
-                              max_tumor_patches=None, ext_patch='tif', ext_mask='tif', overwrite=False,
-                              debug=True):
+                              max_tumor_patches=None, max_normal_backgrounds=None, ext_patch='tif',
+                              ext_mask='tif', overwrite=False, debug=True):
     multiplier = pow(2, level)
     
     # Create or overwrite dirname
@@ -177,20 +177,29 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
     if debug: print("\nGenerate normal patches ...")
     max_tumor_area = (inspection_size_x*inspection_size_y) * max_pct_tumor_area_in_normal_patch
     n_normal_patches = 0
+    n_normal_background = 0
     iterations = tissue_coordinates
     if debug: iterations = tqdm(iterations)
     for coor in iterations:
         loc_crop = get_loc_crop(coor, patch_size, stride)
         crop_slide = get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y))
         
-        if min_mstd is not None:
-            center_crop_slide = centercrop(image=crop_slide)['image']
-            if not is_foreground(center_crop_slide, min_mstd): continue
-        
         # Check whether this is a normal patch or not
         crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y))
         tumor_area = cv2.countNonZero(centercrop(image=crop_mask)['image'])
         category = 'normal' if tumor_area <= max_tumor_area else 'unnormal'
+        
+        if category != 'normal': continue
+        
+        if min_mstd is not None:
+            center_crop_slide = centercrop(image=crop_slide)['image']
+            if not is_foreground(center_crop_slide, min_mstd):
+                if max_normal_backgrounds is not None:
+                    if n_normal_background <= max_normal_backgrounds:
+                        cv2.imwrite(os.path.join(save_dir[category], f"{filename}_patch.{ext_patch}"), crop_slide)
+                        if ext_mask is not None: cv2.imwrite(os.path.join(save_dir[category], f"{filename}_mask.{ext_mask}"), crop_mask)
+                        n_normal_background += 1
+                continue
         
         # If it is a normal patch, then
         if category == 'normal':
