@@ -186,7 +186,7 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
         
         # Check whether this is a normal patch or not
         crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y))
-        tumor_area = cv2.countNonZero(centercrop(image=crop_mask)['image'])
+        tumor_area = cv2.countNonZero(crop_mask)
         category = 'normal' if tumor_area <= max_tumor_area else 'unnormal'
         
         if category != 'normal': continue
