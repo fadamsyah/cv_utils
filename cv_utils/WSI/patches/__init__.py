@@ -1,4 +1,5 @@
 from .functional import get_patches_coor
+from .hard_neg_samples import generate_hard_negative_samples
 from .patches import calculate_tumor_patches
 from .patches import generate_training_patches
 from .patches import get_loc_crop
