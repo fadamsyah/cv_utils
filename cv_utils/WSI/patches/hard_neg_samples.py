@@ -7,7 +7,11 @@ import os
 from .patches import get_crop_mask, get_loc_crop
 from .utils import get_slide_crop
 
-def generate_hard_negative_samples(path_slide, path_mask, path_thumbnail_mask, path_thumbnail_heatmap, patch_size, inspection_size, stride, min_threshold, level, save_dir, ext_patch='png', max_samples=1_000):
+def generate_hard_negative_samples(
+    path_slide, path_mask, path_thumbnail_mask, path_thumbnail_heatmap,
+    patch_size, inspection_size, stride, min_threshold, level, save_dir,
+    ext_patch='png', ext_mask='png', max_samples=1_000
+    ):
     thumbnail_mask, thumbnail_heatmap = helper_read(path_thumbnail_mask, path_thumbnail_heatmap)
     
     prefix = os.path.split(path_slide)[1].split('.')[0]
@@ -17,7 +21,8 @@ def generate_hard_negative_samples(path_slide, path_mask, path_thumbnail_mask, p
     
     slide = openslide.OpenSlide(path_slide)
     mask = openslide.OpenSlide(path_mask)
-    generate_patches_from_coors(slide, mask, level, coors, patch_size, inspection_size, stride, prefix, save_dir, ext_patch)
+    generate_patches_from_coors(slide, mask, level, coors, patch_size, inspection_size, stride, prefix,
+                                save_dir, ext_patch, ext_mask)
 
 def generate_hard_negative_coors(mask, heatmap, max_coors=1_000, min_threshold=0.8):
     
@@ -41,7 +46,9 @@ def generate_hard_negative_coors(mask, heatmap, max_coors=1_000, min_threshold=0
     
     return coors[:max_coors]
 
-def generate_patches_from_coors(slide, mask, level, coors, patch_size, inspection_size, stride, prefix, save_dir, ext_patch='png', ext_mask='png'):
+def generate_patches_from_coors(
+    slide, mask, level, coors, patch_size, inspection_size, stride,
+    prefix, save_dir, ext_patch='png', ext_mask='png'):
     save_tmp = os.path.join(save_dir, prefix)
     
     multiplier = pow(2, level)
