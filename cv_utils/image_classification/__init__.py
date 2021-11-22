@@ -1,3 +1,4 @@
+from .conv2d import Conv2dSamePadding
 from .datamodule import CommonDataModuleWrapper
 from .metrics import (Accuracy, Precision,
                       Recall, F1)
