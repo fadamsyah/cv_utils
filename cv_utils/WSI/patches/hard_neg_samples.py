@@ -15,16 +15,16 @@ def generate_hard_negative_samples(
     thumbnail_mask, thumbnail_heatmap = helper_read(path_thumbnail_mask, path_thumbnail_heatmap)
     
     prefix = os.path.split(path_slide)[1].split('.')[0]
-    prefix = f"{prefix}_hns"
+    prefix = f"{prefix}"
     
-    coors = generate_hard_negative_coors(thumbnail_mask, thumbnail_heatmap, max_samples, min_threshold)
+    coors = generate_hard_negative_coors(thumbnail_mask, thumbnail_heatmap, min_threshold)
     
     slide = openslide.OpenSlide(path_slide)
     mask = openslide.OpenSlide(path_mask)
-    generate_patches_from_coors(slide, mask, level, coors, patch_size, inspection_size, stride, prefix,
-                                save_dir, ext_patch, ext_mask)
+    generate_negative_patches_from_coors(slide, mask, level, coors, patch_size, inspection_size, stride,
+                                         max_samples, prefix, save_dir, ext_patch, ext_mask)
 
-def generate_hard_negative_coors(mask, heatmap, max_coors=1_000, min_threshold=0.8):
+def generate_hard_negative_coors(mask, heatmap, min_threshold=0.5):
     
     fp = np.where(mask==1., 0., heatmap)
     
@@ -44,31 +44,56 @@ def generate_hard_negative_coors(mask, heatmap, max_coors=1_000, min_threshold=0
     res = sorted(res, reverse=True, key=lambda var:var[0])
     coors = [(coor[0], int(coor[1]), int(coor[2])) for coor in res]
     
-    return coors[:max_coors]
+    return coors
+
+def generate_negative_patches_from_coors(
+    slide, mask, level, coors, patch_size, inspection_size, stride,
+    max_samples, prefix, save_dir, ext_patch='png', ext_mask='png'
+    ):
+    
+    class Filter():
+        def __init__(self):
+            multiplier = pow(2, level)
+            inspection_size_x, inspection_size_y = inspection_size
+            inspection_size_x = inspection_size_x // multiplier
+            inspection_size_y = inspection_size_y // multiplier
+            self.centercrop = A.CenterCrop(inspection_size_y, inspection_size_x,
+                                           always_apply=True)
+        
+        def __call__(self, crop_slide, crop_mask):
+            return cv2.countNonZero(self.centercrop(image=crop_mask.copy())['image']) > 0
+    
+    generate_patches_from_coors(slide, mask, level, coors, patch_size, stride,
+                                max_samples, prefix, save_dir, Filter(),
+                                ext_patch, ext_mask)
 
 def generate_patches_from_coors(
-    slide, mask, level, coors, patch_size, inspection_size, stride,
-    prefix, save_dir, ext_patch='png', ext_mask='png'):
+    slide, mask, level, coors, patch_size, stride, max_samples,
+    prefix, save_dir, filter_object, ext_patch='png', ext_mask='png'
+    ):
     save_tmp = os.path.join(save_dir, prefix)
     
-    multiplier = pow(2, level)
-    inspection_size_x, inspection_size_y = inspection_size
-    inspection_size_x = inspection_size_x // multiplier
-    inspection_size_y = inspection_size_y // multiplier
-    centercrop = A.CenterCrop(inspection_size_y, inspection_size_x, always_apply=True)
-    
+    i = 0
     for coor in coors:
         loc_crop = get_loc_crop(coor[1:], patch_size, stride)
         crop_slide = get_slide_crop(slide, loc_crop, level, patch_size)
         crop_mask = get_crop_mask(mask, loc_crop, level, patch_size)
         
-        if cv2.countNonZero(centercrop(image=crop_mask.copy())['image']) > 0:
+        if filter_object(crop_slide, crop_mask):
             continue
         
         filename = f"{save_tmp}_{loc_crop[0]}_{loc_crop[1]}"
-        cv2.imwrite(f"{filename}_patch.{ext_patch}", crop_slide)
+        patch_name = f"{filename}_patch.{ext_patch}"
+        crop_mask_name = f"{filename}_mask.{ext_mask}"
+        
+        if os.path.exists(patch_name): continue
+        
+        cv2.imwrite(patch_name, crop_slide)
         if ext_mask is not None:
-            cv2.imwrite(f"{filename}_mask.{ext_mask}", crop_mask)
+            cv2.imwrite(crop_mask_name, crop_mask)
+        
+        i += 1
+        if i >= max_samples: break
 
 def helper_read(path_thumbnail_mask, path_thumbnail_heatmap):
     thumbnail_mask = cv2.imread(path_thumbnail_mask).astype(np.float32)
