@@ -61,7 +61,7 @@ def generate_positive_patches_from_coors(
             
             throw_away = cond_1 or cond_2
             
-            return cond_2 or cond_1
+            return throw_away
         
         def cond_mstd(self, crop_slide):
             center_crop_slide = self.centercrop(image=crop_slide)['image']
