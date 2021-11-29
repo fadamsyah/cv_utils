@@ -31,8 +31,8 @@ def generate_hard_positive_samples(
                                          save_dir, ext_patch, ext_mask)
 
 def generate_hard_positive_coors(mask, heatmap, max_threshold=0.5):    
-    coors = generate_hard_negative_coors(1. - mask.copy(),
-                                         1. - heatmap.copy(),
+    coors = generate_hard_negative_coors(1. - mask,
+                                         1. - heatmap,
                                          1. - max_threshold)
     coors = [(1. - coor[0], coor[1], coor[2]) for coor in coors]
     

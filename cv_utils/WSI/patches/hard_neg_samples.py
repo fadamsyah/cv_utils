@@ -92,7 +92,6 @@ def generate_patches_from_coors(
         if ext_mask is not None:
             cv2.imwrite(crop_mask_name, crop_mask)
         
-        print(i)
         i += 1
         if i >= max_samples: break
 
