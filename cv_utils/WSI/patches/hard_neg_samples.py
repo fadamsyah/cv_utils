@@ -61,7 +61,8 @@ def generate_negative_patches_from_coors(
                                            always_apply=True)
         
         def __call__(self, crop_slide, crop_mask):
-            return cv2.countNonZero(self.centercrop(image=crop_mask.copy())['image']) > 0
+            # return cv2.countNonZero(self.centercrop(image=crop_mask.copy())['image']) > 0
+            return cv2.countNonZero(crop_mask) > 0
     
     generate_patches_from_coors(slide, mask, level, coors, patch_size, stride,
                                 max_samples, prefix, save_dir, Filter(),
