@@ -1,7 +1,11 @@
 from . import utils
 from . import image_classification
 from . import object_detection
-from . import WSI
+
+try: from . import WSI
+except:
+    print("The multiresolutionimageinterface package is not installed.")
+    print("Please refer to the ASAP repo if you want to install the package.")
 
 from .utils import run_multiprocessing
 
