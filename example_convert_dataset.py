@@ -21,9 +21,10 @@ The converted dataset will be saved as follow:
 for set_name in ["train", "test", "val"]:
     coco_to_yolo(
         coco_annotation_path = f"demo/dataset/fasciola_ori/annotations/instances_{set_name}.json",
-        coco_image_folder = f"demo/dataset/fasciola_ori/{set_name}",
-        output_folder = "demo/dataset/fasciola_yolo",
-        output_set_name = set_name
+        coco_image_dir = f"demo/dataset/fasciola_ori/{set_name}",
+        output_image_dir = f"demo/dataset/fasciola_yolo/images/{set_name}",
+        output_label_dir = f"demo/dataset/fasciola_yolo/labels/{set_name}",
+        output_category_path = f"demo/dataset/fasciola_yolo/classes.txt"
     )
     
 '''YOLO --> COCO
