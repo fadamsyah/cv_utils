@@ -76,6 +76,8 @@ def generate_patches_from_coors(
     
     i = 0
     for coor in coors:
+        if i >= max_samples: break
+        
         loc_crop = get_loc_crop(coor[1:], patch_size, stride)
         crop_slide = get_slide_crop(slide, loc_crop, level, patch_size)
         crop_mask = get_crop_mask(mask, loc_crop, level, patch_size)
@@ -94,7 +96,6 @@ def generate_patches_from_coors(
             cv2.imwrite(crop_mask_name, crop_mask)
         
         i += 1
-        if i >= max_samples: break
 
 def helper_read(path_thumbnail_mask, path_thumbnail_heatmap):
     thumbnail_mask = cv2.imread(path_thumbnail_mask).astype(np.float32)
