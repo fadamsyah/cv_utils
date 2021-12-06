@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import openslide
 import os
+import random
 
 from .patches import get_crop_mask, get_loc_crop
 from .utils import get_slide_crop
@@ -10,21 +11,21 @@ from .utils import get_slide_crop
 def generate_hard_negative_samples(
     path_slide, path_mask, path_thumbnail_mask, path_thumbnail_heatmap,
     patch_size, inspection_size, stride, min_threshold, level, save_dir,
-    ext_patch='png', ext_mask='png', max_samples=1_000
+    ext_patch='png', ext_mask='png', max_samples=1_000, shuffle=False
     ):
     thumbnail_mask, thumbnail_heatmap = helper_read(path_thumbnail_mask, path_thumbnail_heatmap)
     
     prefix = os.path.split(path_slide)[1].split('.')[0]
     prefix = f"{prefix}"
     
-    coors = generate_hard_negative_coors(thumbnail_mask, thumbnail_heatmap, min_threshold)
+    coors = generate_hard_negative_coors(thumbnail_mask, thumbnail_heatmap, min_threshold, shuffle)
     
     slide = openslide.OpenSlide(path_slide)
     mask = openslide.OpenSlide(path_mask)
     generate_negative_patches_from_coors(slide, mask, level, coors, patch_size, inspection_size, stride,
                                          max_samples, prefix, save_dir, ext_patch, ext_mask)
 
-def generate_hard_negative_coors(mask, heatmap, min_threshold=0.5):
+def generate_hard_negative_coors(mask, heatmap, min_threshold=0.5, shuffle=False):
     
     fp = np.where(mask==1., 0., heatmap)
     
@@ -43,6 +44,9 @@ def generate_hard_negative_coors(mask, heatmap, min_threshold=0.5):
     res = list(filter(lambda var: var[0] >= min_threshold, res))
     res = sorted(res, reverse=True, key=lambda var:var[0])
     coors = [(coor[0], int(coor[1]), int(coor[2])) for coor in res]
+    
+    if shuffle:
+        coors = random.sample(coors, len(coors))
     
     return coors
 

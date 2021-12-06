@@ -15,14 +15,14 @@ from .utils import get_slide_crop
 def generate_hard_positive_samples(
     path_slide, path_mask, path_thumbnail_mask, path_thumbnail_heatmap,
     patch_size, inspection_size, stride, min_pct_tumor_area, min_mstd, max_threshold,
-    level, save_dir, ext_patch='png', ext_mask='png', max_samples=1_000
+    level, save_dir, ext_patch='png', ext_mask='png', max_samples=1_000, shuffle=False
     ):
     thumbnail_mask, thumbnail_heatmap = helper_read(path_thumbnail_mask, path_thumbnail_heatmap)
     
     prefix = os.path.split(path_slide)[1].split('.')[0]
     prefix = f"{prefix}"
     
-    coors = generate_hard_positive_coors(thumbnail_mask, thumbnail_heatmap, max_threshold)
+    coors = generate_hard_positive_coors(thumbnail_mask, thumbnail_heatmap, max_threshold, shuffle)
     
     slide = openslide.OpenSlide(path_slide)
     mask = openslide.OpenSlide(path_mask)
@@ -30,10 +30,11 @@ def generate_hard_positive_samples(
                                          stride, min_pct_tumor_area, min_mstd, max_samples, prefix,
                                          save_dir, ext_patch, ext_mask)
 
-def generate_hard_positive_coors(mask, heatmap, max_threshold=0.5):    
+def generate_hard_positive_coors(mask, heatmap, max_threshold=0.5, shuffle=False):    
     coors = generate_hard_negative_coors(1. - mask,
                                          1. - heatmap,
-                                         1. - max_threshold)
+                                         1. - max_threshold,
+                                         shuffle)
     coors = [(1. - coor[0], coor[1], coor[2]) for coor in coors]
     
     return coors
