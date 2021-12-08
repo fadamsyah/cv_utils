@@ -90,8 +90,10 @@ def coco_to_yolo(coco_annotation_path, coco_image_dir,
         categories[cat['id'] - 1] = cat['name']
     
     # Save the category into {output_dir/classes.txt}
+    for i in range(len(categories)-1):
+        categories[i] += '\n'
     with open(output_category_path, 'w') as f:
-            f.writelines(categories)
+        f.writelines(categories)
     
 def yolo_to_coco(yolo_image_dir,  yolo_label_dir, yolo_class_file,
                  coco_image_dir, coco_annotation_path):
