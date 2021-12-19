@@ -22,8 +22,11 @@ def generate_hard_negative_samples(
     
     slide = openslide.OpenSlide(path_slide)
     mask = openslide.OpenSlide(path_mask)
-    generate_negative_patches_from_coors(slide, mask, level, coors, patch_size, inspection_size, stride,
-                                         max_samples, prefix, save_dir, ext_patch, ext_mask)
+    n_samples = generate_negative_patches_from_coors(slide, mask, level, coors, patch_size,
+                                                     inspection_size, stride, max_samples,
+                                                     prefix, save_dir, ext_patch, ext_mask)
+    
+    return n_samples
 
 def generate_hard_negative_coors(mask, heatmap, min_threshold=0.5, shuffle=False):
     
@@ -68,9 +71,11 @@ def generate_negative_patches_from_coors(
             # return cv2.countNonZero(self.centercrop(image=crop_mask.copy())['image']) > 0
             return cv2.countNonZero(crop_mask) > 0
     
-    generate_patches_from_coors(slide, mask, level, coors, patch_size, stride,
-                                max_samples, prefix, save_dir, Filter(),
-                                ext_patch, ext_mask)
+    n_samples = generate_patches_from_coors(slide, mask, level, coors, patch_size, stride,
+                                            max_samples, prefix, save_dir, Filter(),
+                                            ext_patch, ext_mask)
+    
+    return n_samples
 
 def generate_patches_from_coors(
     slide, mask, level, coors, patch_size, stride, max_samples,
@@ -100,6 +105,8 @@ def generate_patches_from_coors(
             cv2.imwrite(crop_mask_name, crop_mask)
         
         i += 1
+    
+    return i
 
 def helper_read(path_thumbnail_mask, path_thumbnail_heatmap):
     thumbnail_mask = cv2.imread(path_thumbnail_mask).astype(np.float32)

@@ -26,9 +26,12 @@ def generate_hard_positive_samples(
     
     slide = openslide.OpenSlide(path_slide)
     mask = openslide.OpenSlide(path_mask)
-    generate_positive_patches_from_coors(slide, mask, level, coors, patch_size, inspection_size,
-                                         stride, min_pct_tumor_area, min_mstd, max_samples, prefix,
-                                         save_dir, ext_patch, ext_mask)
+    n_samples = generate_positive_patches_from_coors(slide, mask, level, coors, patch_size,
+                                                     inspection_size, stride, min_pct_tumor_area,
+                                                     min_mstd, max_samples, prefix, save_dir,
+                                                     ext_patch, ext_mask)
+    
+    return n_samples
 
 def generate_hard_positive_coors(mask, heatmap, max_threshold=0.5, shuffle=False):    
     coors = generate_hard_negative_coors(1. - mask,
@@ -74,6 +77,8 @@ def generate_positive_patches_from_coors(
             
             return not tumor_area >= self.min_tumor_area
     
-    generate_patches_from_coors(slide, mask, level, coors, patch_size, stride,
-                                max_samples, prefix, save_dir, Filter(),
-                                ext_patch, ext_mask)
+    n_samples = generate_patches_from_coors(slide, mask, level, coors, patch_size,
+                                            stride, max_samples, prefix, save_dir,
+                                            Filter(), ext_patch, ext_mask)
+    
+    return n_samples
