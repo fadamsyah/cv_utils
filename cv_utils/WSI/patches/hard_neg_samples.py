@@ -55,7 +55,8 @@ def generate_hard_negative_coors(mask, heatmap, min_threshold=0.5, shuffle=False
 
 def generate_negative_patches_from_coors(
     slide, mask, level, coors, patch_size, inspection_size, stride,
-    max_samples, prefix, save_dir, ext_patch='png', ext_mask='png'
+    max_samples, prefix, save_dir, ext_patch='png', ext_mask='png',
+    zero_pixel_in_outer=True
     ):
     
     class Filter():
@@ -68,8 +69,10 @@ def generate_negative_patches_from_coors(
                                            always_apply=True)
         
         def __call__(self, crop_slide, crop_mask):
-            # return cv2.countNonZero(self.centercrop(image=crop_mask.copy())['image']) > 0
-            return cv2.countNonZero(crop_mask) > 0
+            if zero_pixel_in_outer==True:
+                return cv2.countNonZero(crop_mask) > 0
+            else:
+                return cv2.countNonZero(self.centercrop(image=crop_mask.copy())['image']) > 0
     
     n_samples = generate_patches_from_coors(slide, mask, level, coors, patch_size, stride,
                                             max_samples, prefix, save_dir, Filter(),
