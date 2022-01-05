@@ -95,7 +95,7 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
                               inspection_size, save_dir, normal_tumor_ratio=1.0, min_mstd=5.,
                               min_pct_tumor_area=0.05, max_pct_tumor_area_in_normal_patch=0.,
                               max_tumor_patches=None, max_normal_backgrounds=None, ext_patch='tif',
-                              ext_mask='tif', overwrite=False, debug=True):
+                              ext_mask='tif', overwrite=False, normal_check_all_pixels=True, debug=True):
     multiplier = pow(2, level)
     
     # Create or overwrite dirname
@@ -186,7 +186,10 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
         
         # Check whether this is a normal patch or not
         crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y))
-        tumor_area = cv2.countNonZero(crop_mask)
+        if normal_check_all_pixels==True:
+            tumor_area = cv2.countNonZero(crop_mask)
+        else:
+            tumor_area = cv2.countNonZero(centercrop(image=crop_mask)['image'])
         category = 'normal' if tumor_area <= max_tumor_area else 'unnormal'
         
         if category != 'normal': continue
