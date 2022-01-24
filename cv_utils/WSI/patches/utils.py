@@ -3,11 +3,18 @@ import numpy as np
 import openslide
 
 from PIL import Image
+from typing import List, Tuple, Union
 from skimage.filters import threshold_otsu
 
 from ..utils import pil_to_cv2
 
-def get_slide_crop(slide, loc_crop, level, patch_size):
+def get_slide_crop(
+    slide: openslide.OpenSlide,
+    loc_crop: Union[List[int, int], Tuple[int, int]],
+    level: int,
+    patch_size: Union[List[int, int], Tuple[int, int]],
+    ) -> np.ndarray:
+    
     multiplier = pow(2, level)
     
     patch_size_x, patch_size_y = patch_size
@@ -20,7 +27,12 @@ def get_slide_crop(slide, loc_crop, level, patch_size):
     
     return crop_slide
 
-def get_thumbnail(slide, inp, interpolation=Image.BICUBIC):
+def get_thumbnail(
+    slide: openslide.OpenSlide,
+    inp: Union[int, List[int, int], Tuple[int, int]],
+    interpolation: int = Image.BICUBIC,
+    ) -> np.ndarray:
+    
     if isinstance(inp, int):
         thumbnail_size = slide.level_dimensions[inp]
     elif isinstance(inp, (list, tuple)):
@@ -38,7 +50,10 @@ def get_thumbnail(slide, inp, interpolation=Image.BICUBIC):
     
     return thumbnail
 
-def get_hsv_otsu_threshold(img):
+def get_hsv_otsu_threshold(
+    img: np.ndarray,
+    ) -> Tuple[np.ndarray, int, int, int]:
+    
     hsv_image = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     h, s, v = cv2.split(hsv_image)
     hthresh = threshold_otsu(h)
@@ -47,9 +62,13 @@ def get_hsv_otsu_threshold(img):
     
     return hsv_image, hthresh, sthresh, vthresh
 
-def get_size(size):
+def get_size(
+    size: Union[int, List[int, int], Tuple[int, int]],
+    ) -> Tuple[int, int]:
+    
     if isinstance(size, (list, tuple)):
         size_x, size_y = size
     elif isinstance(size, int):
         size_x, size_y = size, size
+    
     return size_x, size_y

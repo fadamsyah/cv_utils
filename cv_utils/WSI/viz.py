@@ -13,7 +13,13 @@ import pandas as pd
 
 from .utils import pil_to_cv2, xml_to_df
 
-def viz_with_xml(path_wsi, path_xml, level, show=True):
+def viz_with_xml(
+    path_wsi: str,
+    path_xml: str,
+    level: int,
+    show: bool = True,
+    ) -> np.ndarray:
+    
     reader = mir.MultiResolutionImageReader()
     mr_image = reader.open(path_wsi)
     
@@ -50,7 +56,13 @@ def viz_with_xml(path_wsi, path_xml, level, show=True):
     
     return vis
 
-def viz_with_mask(path_wsi, path_mask, level, show=True):
+def viz_with_mask(
+    path_wsi: str,
+    path_mask: str,
+    level: int,
+    show: bool = True,
+    ) -> np.ndarray:
+    
     slide = openslide.open_slide(path_wsi)
     mask = openslide.open_slide(path_mask)
     

@@ -7,15 +7,23 @@ import cv2
 import math
 import numpy as np
 import pandas as pd
+import PIL
 import xml
 import xml.etree.ElementTree as et
 
-def xml_to_df(inp, scale_x=1.0, scale_y=1.0):
+from typing import Union
+
+def xml_to_df(
+    inp: Union[str, et.ElementTree],
+    scale_x: float = 1.0,
+    scale_y: float = 1.0,
+    ) -> pd.DataFrame:
+    
     if isinstance(inp, str):
         parseXML = et.parse(inp)
-    elif isinstance(inp, xml.etree.ElementTree.ElementTree):
+    elif isinstance(inp, et.ElementTree):
         parseXML = inp
-        
+    
     root = parseXML.getroot()
     dfcols = ['Name', 'Order', 'X', 'Y']
     df_xml = pd.DataFrame(columns=dfcols)
@@ -30,10 +38,13 @@ def xml_to_df(inp, scale_x=1.0, scale_y=1.0):
             df_xml = df_xml.append(pd.Series([Name, Order, X_coord, Y_coord],
                                              index = dfcols), ignore_index=True)
             df_xml = pd.DataFrame(df_xml)
-            
+    
     return df_xml
 
-def pil_to_cv2(img):
+def pil_to_cv2(
+    img: PIL.Image.Image,
+    ) -> np.ndarray:
+    
     img = img.convert("RGB")
     img = np.asarray(img, dtype=np.uint8)
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)

@@ -1,13 +1,21 @@
 import math
 
+from typing import List, Tuple, Union
+
 from .utils import get_size
 
-def get_patches_coor(x_org_size, y_org_size, level, patch_size, stride,
-                     drop_last=True):
+def get_patches_coor(
+    x_org_size: int,
+    y_org_size: int,
+    level: int,
+    patch_size: Union[int, List[int, int], Tuple[int, int]],
+    stride: Union[int, List[int, int], Tuple[int, int]],
+    drop_last: bool = True,
+    ) -> List[dict]:
     
     stride_x, stride_y = get_size(stride)
     
-    if isinstance(patch_size, (list, dict, tuple)):
+    if isinstance(patch_size, (list, tuple)):
         patch_size_x, patch_size_y = patch_size
     elif isinstance(patch_size, int):
         patch_size_x, patch_size_y = patch_size, patch_size

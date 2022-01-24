@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 from skimage.filters import threshold_otsu
 from tqdm import tqdm
+from typing import List, Tuple, Union, Optional
 
 from .utils import get_size
 from .utils import get_thumbnail
@@ -19,9 +20,19 @@ from .utils import get_slide_crop
 
 from ...utils import create_and_overwrite_dir
 
-def calculate_tumor_patches(path_slide, path_mask, level, patch_size, stride,
-                            inspection_size, min_mstd=5., min_pct_tumor_area=0.05,
-                            max_tumor_patches=None, debug=True):
+def calculate_tumor_patches(
+    path_slide: str,
+    path_mask: str,
+    level: int,
+    patch_size: Union[int, List[int, int], Tuple[int, int]],
+    stride: Union[int, List[int, int], Tuple[int, int]],
+    inspection_size: Union[int, List[int, int], Tuple[int, int]],
+    min_mstd: float = 5.,
+    min_pct_tumor_area: float = 0.05,
+    max_tumor_patches: Optional[int] = None,
+    debug: bool = True,
+    ) -> int:
+    
     multiplier = pow(2, level)
     
     # Read slide & mask
@@ -91,11 +102,27 @@ def calculate_tumor_patches(path_slide, path_mask, level, patch_size, stride,
     
     return n_tumor_patches
 
-def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
-                              inspection_size, save_dir, normal_tumor_ratio=1.0, min_mstd=5.,
-                              min_pct_tumor_area=0.05, max_pct_tumor_area_in_normal_patch=0.,
-                              max_tumor_patches=None, max_normal_backgrounds=None, ext_patch='tif',
-                              ext_mask='tif', overwrite=False, normal_check_all_pixels=True, debug=True):
+def generate_training_patches(
+    path_slide: str,
+    path_mask: str,
+    level: int,
+    patch_size: Union[int, List[int, int], Tuple[int, int]],
+    stride: Union[int, List[int, int], Tuple[int, int]],
+    inspection_size: Union[int, List[int, int], Tuple[int, int]],
+    save_dir: str,
+    normal_tumor_ratio: float = 1.0,
+    min_mstd: float = 5.,
+    min_pct_tumor_area: float = 0.05,
+    max_pct_tumor_area_in_normal_patch: float = 0.,
+    max_tumor_patches: Optional[int] = None,
+    max_normal_backgrounds: Optional[int] = None,
+    ext_patch: str = 'tif',
+    ext_mask: str = 'tif',
+    overwrite: bool = False,
+    normal_check_all_pixels: bool = True,
+    debug: bool = True,
+    ) -> None:
+    
     multiplier = pow(2, level)
     
     # Create or overwrite dirname
@@ -220,8 +247,15 @@ def generate_training_patches(path_slide, path_mask, level, patch_size, stride,
         print(f"tumor : {n_tumor_patches}")
         print(f"normal: {n_normal_patches}")
 
-def get_tissue_coordinates(slide, x_tmb_size, y_tmb_size, ksize=3,
-                           kernel_size=(2,2), iterations=1):
+def get_tissue_coordinates(
+    slide: Union[str, openslide.OpenSlide],
+    x_tmb_size: int,
+    y_tmb_size: int,
+    ksize: Optional[int] = 3,
+    kernel_size: Union[Tuple[int, int], List[int, int]] = (2,2),
+    iterations: int = 1,
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    
     if isinstance(slide, str):
         slide = openslide.OpenSlide(slide)
     
@@ -233,8 +267,15 @@ def get_tissue_coordinates(slide, x_tmb_size, y_tmb_size, ksize=3,
     
     return tissue_thumbnail, tissue_coordinates, tissue_binary_map
 
-def get_tumor_coordinates(mask, x_tmb_size, y_tmb_size, ksize=None,
-                          kernel_size=(3,3), iterations=1):
+def get_tumor_coordinates(
+    mask: Union[str, openslide.OpenSlide],
+    x_tmb_size: int,
+    y_tmb_size: int,
+    ksize: Optional[int] = None,
+    kernel_size: Union[Tuple[int, int], List[int, int]] = (3,3),
+    iterations: int = 1,
+    ) -> Tuple[np.ndarray, np.ndarray]:
+    
     if isinstance(mask, str):
         mask = openslide.OpenSlide(mask)
     
@@ -246,7 +287,10 @@ def get_tumor_coordinates(mask, x_tmb_size, y_tmb_size, ksize=None,
     
     return tumor_thumbnail, tumor_coordinates
 
-def get_positive_coordinates(binary_map):
+def get_positive_coordinates(
+    binary_map: np.ndarray,
+    ) -> np.ndarray:
+    
     # Remember that the OpenCV library uses (H x W x C) format, whereas
     # OpenSlide uses (W x H x C) format.
     list_y, list_x = np.where(binary_map == 255)
@@ -256,7 +300,12 @@ def get_positive_coordinates(binary_map):
     
     return coordinates
 
-def get_loc_crop(coordinate, patch_size, stride):
+def get_loc_crop(
+    coordinate: Union[List[int, int], Tuple[int, int]],
+    patch_size: Union[int, List[int, int], Tuple[int, int]],
+    stride: Union[int, List[int, int], Tuple[int, int]],
+    ) -> Tuple[int, int]:
+    
     # Get stride and patch_size for each x, y coordinates
     stride_x, stride_y = get_size(stride)
     patch_size_x, patch_size_y = get_size(patch_size)
@@ -268,14 +317,27 @@ def get_loc_crop(coordinate, patch_size, stride):
     
     return loc_crop
 
-def get_crop_mask(mask, loc_crop, level, patch_size):
+def get_crop_mask(
+    mask: openslide.OpenSlide,
+    loc_crop: Union[List[int, int], Tuple[int, int]],
+    level: int,
+    patch_size: Union[List[int, int], Tuple[int, int]],
+    ) -> np.ndarray:
+    
     crop_mask = get_slide_crop(mask, loc_crop, level, patch_size)
     crop_mask = cv2.cvtColor(crop_mask, cv2.COLOR_BGR2GRAY)
     crop_mask = np.where(crop_mask != 0, 255, 0).astype(np.uint8)
     
     return crop_mask
 
-def process_thumbnail_binary_map(thumbnail, slide_type, ksize=None, kernel_size=None, iterations=None):
+def process_thumbnail_binary_map(
+    thumbnail: np.ndarray,
+    slide_type: str,
+    ksize: Optional[int] = None,
+    kernel_size: Optional[Tuple[int, int] | List[int, int]] = None,
+    iterations: Optional[int] = None,
+    ) -> np.ndarray:
+    
     grey = cv2.cvtColor(thumbnail, cv2.COLOR_BGR2GRAY)
     
     if slide_type.lower() == 'slide':
@@ -292,7 +354,11 @@ def process_thumbnail_binary_map(thumbnail, slide_type, ksize=None, kernel_size=
     
     return binary_map
 
-def is_foreground(patch, threshold_mstd=5.):
+def is_foreground(
+    patch: np.ndarray,
+    threshold_mstd: float = 5.,
+    ) -> bool:
+    
     # Reference/Source:
     # https://github.com/longluu/DL-CancerDetection-CAMELYON16/blob/master/CancerDetection_preprocessing_1level.ipynb
     mstd = np.mean(np.std(patch, axis=-1))

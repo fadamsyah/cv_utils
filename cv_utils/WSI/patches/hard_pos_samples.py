@@ -13,10 +13,24 @@ from .hard_neg_samples import (
 from .utils import get_slide_crop
 
 def generate_hard_positive_samples(
-    path_slide, path_mask, path_thumbnail_mask, path_thumbnail_heatmap,
-    patch_size, inspection_size, stride, min_pct_tumor_area, min_mstd, max_threshold,
-    level, save_dir, ext_patch='png', ext_mask='png', max_samples=1_000, shuffle=False
-    ):
+    path_slide: str,
+    path_mask: str,
+    path_thumbnail_mask: str,
+    path_thumbnail_heatmap: str,
+    patch_size: Union[int, List[int, int], Tuple[int, int]],
+    inspection_size: Union[List[int, int], Tuple[int, int]],
+    stride: Union[int, List[int, int], Tuple[int, int]],
+    min_pct_tumor_area: float,
+    min_mstd: float,
+    max_threshold: float,
+    level: int,
+    save_dir: str,
+    ext_patch: str = 'png',
+    ext_mask: str = 'png',
+    max_samples: int = 1_000,
+    shuffle: bool = False,
+    ) -> int:
+    
     thumbnail_mask, thumbnail_heatmap = helper_read(path_thumbnail_mask, path_thumbnail_heatmap)
     
     prefix = os.path.split(path_slide)[1].split('.')[0]
@@ -33,7 +47,13 @@ def generate_hard_positive_samples(
     
     return n_samples
 
-def generate_hard_positive_coors(mask, heatmap, max_threshold=0.5, shuffle=False):    
+def generate_hard_positive_coors(
+    mask: np.ndarray,
+    heatmap: np.ndarray,
+    max_threshold: float = 0.5,
+    shuffle: bool = False,
+    ) -> List[Union[List[float, int, int], Tuple[float, int, int]]]:
+    
     coors = generate_hard_negative_coors(1. - mask,
                                          1. - heatmap,
                                          1. - max_threshold,
@@ -43,13 +63,24 @@ def generate_hard_positive_coors(mask, heatmap, max_threshold=0.5, shuffle=False
     return coors
 
 def generate_positive_patches_from_coors(
-    slide, mask, level, coors, patch_size, inspection_size, stride,
-    min_pct_tumor_area, min_mstd, max_samples, prefix, save_dir,
-    ext_patch='png', ext_mask='png'
-    ):
+    slide: openslide.OpenSlide,
+    mask: openslide.OpenSlide,
+    level: int,
+    coors: List[Union[List[float, int, int], Tuple[float, int, int]]],
+    patch_size: Union[int, List[int, int], Tuple[int, int]],
+    inspection_size: Union[List[int, int], Tuple[int, int]],
+    stride: Union[int, List[int, int], Tuple[int, int]],
+    min_pct_tumor_area: float,
+    min_mstd: float,
+    max_samples: int,
+    prefix: str,
+    save_dir: str,
+    ext_patch: str = 'png',
+    ext_mask: str = 'png',
+    ) -> int:
     
     class Filter():
-        def __init__(self):
+        def __init__(self) -> None:
             multiplier = pow(2, level)
             inspection_size_x, inspection_size_y = inspection_size
             inspection_size_x = inspection_size_x // multiplier
@@ -59,7 +90,12 @@ def generate_positive_patches_from_coors(
             self.min_tumor_area = (inspection_size_x*inspection_size_y) * min_pct_tumor_area
             self.min_mstd = min_mstd
         
-        def __call__(self, crop_slide, crop_mask):
+        def __call__(
+            self,
+            crop_slide: np.ndarray,
+            crop_mask: np.ndarray,
+            ) -> bool:
+            
             cond_1 = self.cond_mstd(crop_slide)
             cond_2 = self.cond_tumor_area(crop_mask)
             
@@ -67,12 +103,12 @@ def generate_positive_patches_from_coors(
             
             return throw_away
         
-        def cond_mstd(self, crop_slide):
+        def cond_mstd(self, crop_slide: np.ndarray) -> bool:
             center_crop_slide = self.centercrop(image=crop_slide)['image']
             
             return not is_foreground(center_crop_slide, self.min_mstd)
         
-        def cond_tumor_area(self, crop_mask):
+        def cond_tumor_area(self, crop_mask: np.ndarray) -> bool:
             tumor_area = cv2.countNonZero(self.centercrop(image=crop_mask)['image'])
             
             return not tumor_area >= self.min_tumor_area
