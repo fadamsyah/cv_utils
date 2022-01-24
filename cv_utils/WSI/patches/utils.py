@@ -10,9 +10,9 @@ from ..utils import pil_to_cv2
 
 def get_slide_crop(
     slide: openslide.OpenSlide,
-    loc_crop: Union[List[int, int], Tuple[int, int]],
+    loc_crop: Union[List[int], Tuple[int, int]],
     level: int,
-    patch_size: Union[List[int, int], Tuple[int, int]],
+    patch_size: Union[List[int], Tuple[int, int]],
     ) -> np.ndarray:
     
     multiplier = pow(2, level)
@@ -29,7 +29,7 @@ def get_slide_crop(
 
 def get_thumbnail(
     slide: openslide.OpenSlide,
-    inp: Union[int, List[int, int], Tuple[int, int]],
+    inp: Union[int, List[int], Tuple[int, int]],
     interpolation: int = Image.BICUBIC,
     ) -> np.ndarray:
     
@@ -63,7 +63,7 @@ def get_hsv_otsu_threshold(
     return hsv_image, hthresh, sthresh, vthresh
 
 def get_size(
-    size: Union[int, List[int, int], Tuple[int, int]],
+    size: Union[int, List[int], Tuple[int, int]],
     ) -> Tuple[int, int]:
     
     if isinstance(size, (list, tuple)):

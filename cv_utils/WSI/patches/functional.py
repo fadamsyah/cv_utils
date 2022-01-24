@@ -8,8 +8,8 @@ def get_patches_coor(
     x_org_size: int,
     y_org_size: int,
     level: int,
-    patch_size: Union[int, List[int, int], Tuple[int, int]],
-    stride: Union[int, List[int, int], Tuple[int, int]],
+    patch_size: Union[int, List[int], Tuple[int, int]],
+    stride: Union[int, List[int], Tuple[int, int]],
     drop_last: bool = True,
     ) -> List[dict]:
     

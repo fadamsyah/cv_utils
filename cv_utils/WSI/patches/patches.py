@@ -24,9 +24,9 @@ def calculate_tumor_patches(
     path_slide: str,
     path_mask: str,
     level: int,
-    patch_size: Union[int, List[int, int], Tuple[int, int]],
-    stride: Union[int, List[int, int], Tuple[int, int]],
-    inspection_size: Union[int, List[int, int], Tuple[int, int]],
+    patch_size: Union[int, List[int], Tuple[int, int]],
+    stride: Union[int, List[int], Tuple[int, int]],
+    inspection_size: Union[int, List[int], Tuple[int, int]],
     min_mstd: float = 5.,
     min_pct_tumor_area: float = 0.05,
     max_tumor_patches: Optional[int] = None,
@@ -106,9 +106,9 @@ def generate_training_patches(
     path_slide: str,
     path_mask: str,
     level: int,
-    patch_size: Union[int, List[int, int], Tuple[int, int]],
-    stride: Union[int, List[int, int], Tuple[int, int]],
-    inspection_size: Union[int, List[int, int], Tuple[int, int]],
+    patch_size: Union[int, List[int], Tuple[int, int]],
+    stride: Union[int, List[int], Tuple[int, int]],
+    inspection_size: Union[int, List[int], Tuple[int, int]],
     save_dir: str,
     normal_tumor_ratio: float = 1.0,
     min_mstd: float = 5.,
@@ -252,7 +252,7 @@ def get_tissue_coordinates(
     x_tmb_size: int,
     y_tmb_size: int,
     ksize: Optional[int] = 3,
-    kernel_size: Union[Tuple[int, int], List[int, int]] = (2,2),
+    kernel_size: Union[Tuple[int, int], List[int]] = (2,2),
     iterations: int = 1,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     
@@ -272,7 +272,7 @@ def get_tumor_coordinates(
     x_tmb_size: int,
     y_tmb_size: int,
     ksize: Optional[int] = None,
-    kernel_size: Union[Tuple[int, int], List[int, int]] = (3,3),
+    kernel_size: Union[Tuple[int, int], List[int]] = (3,3),
     iterations: int = 1,
     ) -> Tuple[np.ndarray, np.ndarray]:
     
@@ -301,9 +301,9 @@ def get_positive_coordinates(
     return coordinates
 
 def get_loc_crop(
-    coordinate: Union[List[int, int], Tuple[int, int]],
-    patch_size: Union[int, List[int, int], Tuple[int, int]],
-    stride: Union[int, List[int, int], Tuple[int, int]],
+    coordinate: Union[List[int], Tuple[int, int]],
+    patch_size: Union[int, List[int], Tuple[int, int]],
+    stride: Union[int, List[int], Tuple[int, int]],
     ) -> Tuple[int, int]:
     
     # Get stride and patch_size for each x, y coordinates
@@ -319,9 +319,9 @@ def get_loc_crop(
 
 def get_crop_mask(
     mask: openslide.OpenSlide,
-    loc_crop: Union[List[int, int], Tuple[int, int]],
+    loc_crop: Union[List[int], Tuple[int, int]],
     level: int,
-    patch_size: Union[List[int, int], Tuple[int, int]],
+    patch_size: Union[List[int], Tuple[int, int]],
     ) -> np.ndarray:
     
     crop_mask = get_slide_crop(mask, loc_crop, level, patch_size)
@@ -334,7 +334,7 @@ def process_thumbnail_binary_map(
     thumbnail: np.ndarray,
     slide_type: str,
     ksize: Optional[int] = None,
-    kernel_size: Optional[Tuple[int, int] | List[int, int]] = None,
+    kernel_size: Optional[Union[Tuple[int, int], List[int]]] = None,
     iterations: Optional[int] = None,
     ) -> np.ndarray:
     

@@ -4,6 +4,8 @@ import numpy as np
 import openslide
 import os
 
+from typing import List, Optional, Tuple, Union
+
 from .patches import get_crop_mask, get_loc_crop, is_foreground
 from .hard_neg_samples import (
     generate_patches_from_coors,
@@ -17,9 +19,9 @@ def generate_hard_positive_samples(
     path_mask: str,
     path_thumbnail_mask: str,
     path_thumbnail_heatmap: str,
-    patch_size: Union[int, List[int, int], Tuple[int, int]],
-    inspection_size: Union[List[int, int], Tuple[int, int]],
-    stride: Union[int, List[int, int], Tuple[int, int]],
+    patch_size: Union[int, List[int], Tuple[int, int]],
+    inspection_size: Union[List[int], Tuple[int, int]],
+    stride: Union[int, List[int], Tuple[int, int]],
     min_pct_tumor_area: float,
     min_mstd: float,
     max_threshold: float,
@@ -52,7 +54,7 @@ def generate_hard_positive_coors(
     heatmap: np.ndarray,
     max_threshold: float = 0.5,
     shuffle: bool = False,
-    ) -> List[Union[List[float, int, int], Tuple[float, int, int]]]:
+    ) -> List[Union[List, Tuple[float, int, int]]]:
     
     coors = generate_hard_negative_coors(1. - mask,
                                          1. - heatmap,
@@ -66,10 +68,10 @@ def generate_positive_patches_from_coors(
     slide: openslide.OpenSlide,
     mask: openslide.OpenSlide,
     level: int,
-    coors: List[Union[List[float, int, int], Tuple[float, int, int]]],
-    patch_size: Union[int, List[int, int], Tuple[int, int]],
-    inspection_size: Union[List[int, int], Tuple[int, int]],
-    stride: Union[int, List[int, int], Tuple[int, int]],
+    coors: List[Union[List, Tuple[float, int, int]]],
+    patch_size: Union[int, List[int], Tuple[int, int]],
+    inspection_size: Union[List[int], Tuple[int, int]],
+    stride: Union[int, List[int], Tuple[int, int]],
     min_pct_tumor_area: float,
     min_mstd: float,
     max_samples: int,
