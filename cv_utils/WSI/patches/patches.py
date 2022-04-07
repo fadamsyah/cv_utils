@@ -226,6 +226,8 @@ def generate_training_patches(
             if not is_foreground(center_crop_slide, min_mstd):
                 if max_normal_backgrounds is not None:
                     if n_normal_background <= max_normal_backgrounds:
+                        filename = os.path.split(path_slide)[1].split('.')[0]
+                        filename = f"{filename}_{loc_crop[0]}_{loc_crop[1]}"
                         cv2.imwrite(os.path.join(save_dir[category], f"{level}_{filename}_patch.{ext_patch}"), crop_slide)
                         if ext_mask is not None: cv2.imwrite(os.path.join(save_dir[category], f"{level}_{filename}_mask.{ext_mask}"), crop_mask)
                         n_normal_background += 1
