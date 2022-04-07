@@ -13,13 +13,15 @@ def get_slide_crop(
     loc_crop: Union[List[int], Tuple[int, int]],
     level: int,
     patch_size: Union[List[int], Tuple[int, int]],
+    automate_scaling: bool = True,
     ) -> np.ndarray:
     
     multiplier = pow(2, level)
     
     patch_size_x, patch_size_y = patch_size
-    patch_size_x = patch_size_x // multiplier
-    patch_size_y = patch_size_y // multiplier
+    if automate_scaling == True:
+        patch_size_x = patch_size_x // multiplier
+        patch_size_y = patch_size_y // multiplier
     
     crop_slide = slide.read_region(loc_crop, level,
                                    (patch_size_x, patch_size_y))

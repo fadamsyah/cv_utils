@@ -30,6 +30,7 @@ def calculate_tumor_patches(
     min_mstd: float = 5.,
     min_pct_tumor_area: float = 0.05,
     max_tumor_patches: Optional[int] = None,
+    automate_scaling: bool = True,
     debug: bool = True,
     ) -> int:
     
@@ -68,8 +69,9 @@ def calculate_tumor_patches(
         print(f"The number of tumor regions: {len(tumor_coordinates)}")
     
     # For filtering tissue and tumor regions
-    inspection_size_x = inspection_size_x // multiplier
-    inspection_size_y = inspection_size_y // multiplier
+    if automate_scaling == True:
+        inspection_size_x = inspection_size_x // multiplier
+        inspection_size_y = inspection_size_y // multiplier
     centercrop = A.CenterCrop(inspection_size_y, inspection_size_x, always_apply=True)
     min_tumor_area = (inspection_size_x*inspection_size_y) * min_pct_tumor_area
     
@@ -80,14 +82,14 @@ def calculate_tumor_patches(
     if debug: iterations = tqdm(iterations)
     for coor in iterations:
         loc_crop = get_loc_crop(coor, patch_size, stride)
-        crop_slide = get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y))
+        crop_slide = get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y), automate_scaling)
         
         if min_mstd is not None:
             center_crop_slide = centercrop(image=crop_slide)['image']
             if not is_foreground(center_crop_slide, min_mstd): continue
         
         # Check whether this is a tumor
-        crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y))
+        crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y), automate_scaling)
         tumor_area = cv2.countNonZero(centercrop(image=crop_mask)['image'])
         category = 'tumor' if tumor_area >= min_tumor_area else 'normal'
         
@@ -120,6 +122,7 @@ def generate_training_patches(
     ext_mask: str = 'tif',
     overwrite: bool = False,
     normal_check_all_pixels: bool = True,
+    automate_scaling = True,
     debug: bool = True,
     ) -> None:
     
@@ -165,8 +168,9 @@ def generate_training_patches(
         print(f"The number of tumor regions: {len(tumor_coordinates)}")
     
     # For filtering tissue and tumor regions
-    inspection_size_x = inspection_size_x // multiplier
-    inspection_size_y = inspection_size_y // multiplier
+    if automate_scaling == True:
+        inspection_size_x = inspection_size_x // multiplier
+        inspection_size_y = inspection_size_y // multiplier
     centercrop = A.CenterCrop(inspection_size_y, inspection_size_x, always_apply=True)
     min_tumor_area = (inspection_size_x*inspection_size_y) * min_pct_tumor_area
     
@@ -177,14 +181,14 @@ def generate_training_patches(
     if debug: iterations = tqdm(iterations)
     for coor in iterations:
         loc_crop = get_loc_crop(coor, patch_size, stride)
-        crop_slide = get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y))
+        crop_slide = get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y), automate_scaling)
         
         if min_mstd is not None:
             center_crop_slide = centercrop(image=crop_slide)['image']
             if not is_foreground(center_crop_slide, min_mstd): continue
         
         # Check whether this is a tumor
-        crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y))
+        crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y), automate_scaling)
         tumor_area = cv2.countNonZero(centercrop(image=crop_mask)['image'])
         category = 'tumor' if tumor_area >= min_tumor_area else 'normal'
         
@@ -209,10 +213,10 @@ def generate_training_patches(
     if debug: iterations = tqdm(iterations)
     for coor in iterations:
         loc_crop = get_loc_crop(coor, patch_size, stride)
-        crop_slide = get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y))
+        crop_slide = get_slide_crop(slide, loc_crop, level, (patch_size_x, patch_size_y), automate_scaling)
         
         # Check whether this is a normal patch or not
-        crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y))
+        crop_mask = get_crop_mask(mask, loc_crop, level, (patch_size_x, patch_size_y), automate_scaling)
         if normal_check_all_pixels==True:
             tumor_area = cv2.countNonZero(crop_mask)
         else:
@@ -324,9 +328,10 @@ def get_crop_mask(
     loc_crop: Union[List[int], Tuple[int, int]],
     level: int,
     patch_size: Union[List[int], Tuple[int, int]],
+    automate_scaling: bool = True,
     ) -> np.ndarray:
     
-    crop_mask = get_slide_crop(mask, loc_crop, level, patch_size)
+    crop_mask = get_slide_crop(mask, loc_crop, level, patch_size, automate_scaling)
     crop_mask = cv2.cvtColor(crop_mask, cv2.COLOR_BGR2GRAY)
     crop_mask = np.where(crop_mask != 0, 255, 0).astype(np.uint8)
     
